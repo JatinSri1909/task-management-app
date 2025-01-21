@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useState } from "react"
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Pencil, ArrowUpDown, X } from "lucide-react"
+import { Pencil, X } from "lucide-react"
 
 const initialTasks = [
   {
@@ -96,7 +97,7 @@ export default function TaskContent() {
     .filter((task) => !filterPriority || task.priority === Number.parseInt(filterPriority))
     .filter((task) => !filterStatus || task.status === filterStatus)
     .sort((a, b) => {
-      const [field, order] = sortBy.split(":")
+      const [field, order] = sortBy.split(":") as [keyof typeof tasks[0], string]
       if (a[field] < b[field]) return order === "asc" ? -1 : 1
       if (a[field] > b[field]) return order === "asc" ? 1 : -1
       return 0
