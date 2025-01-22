@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import { Geist, Azeret_Mono as Geist_Mono } from "next/font/google"
 import "./globals.css"
+import { UserProvider } from "@/contexts/user-context"
+import Wrapper from "@/components/layout/wrapper"
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -24,7 +26,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth">
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>{children}</body>
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+        <UserProvider>
+          <Wrapper>
+            {children}
+          </Wrapper>
+        </UserProvider>
+      </body>
     </html>
   )
 }

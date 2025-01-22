@@ -8,19 +8,21 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle } from "lucide-react"
+import { useUser } from "@/contexts/user-context"
 
 export default function SignupPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const router = useRouter()
+  const { signup } = useUser()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would typically handle the signup logic
-    console.log("Signup attempted with:", name, email, password)
-    // For demo purposes, we'll just redirect to the home page
-    router.push("/")
+    const success = signup(name, email, password)
+    if (success) {
+      router.push('/dashboard')
+    }
   }
 
   return (
