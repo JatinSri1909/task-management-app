@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Pencil, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 
 const initialTasks = [
   {
@@ -60,6 +61,8 @@ export default function TaskContent() {
     endTime: "",
   })
   const { toast } = useToast()
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5 // Adjust this number as needed
 
   const handleAddTask = () => {
     const taskToAdd = {
@@ -119,6 +122,18 @@ export default function TaskContent() {
       if (a[field] > b[field]) return order === "asc" ? 1 : -1
       return 0
     })
+
+  // Add pagination calculation
+  const paginatedTasks = filteredAndSortedTasks.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  const totalPages = Math.ceil(filteredAndSortedTasks.length / itemsPerPage)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
 
   return (
     <div className="space-y-4">
@@ -271,7 +286,7 @@ export default function TaskContent() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAndSortedTasks.map((task) => (
+            {paginatedTasks.map((task) => (
               <TableRow key={task.id}>
                 <TableCell>
                   <Checkbox
@@ -382,6 +397,63 @@ export default function TaskContent() {
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Add pagination controls */}
+      <div className="flex justify-center">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            
+            {[...Array(totalPages)].map((_, index) => {
+              const page = index + 1
+              // Show first page, last page, and pages around current page
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= currentPage - 1 && page <= currentPage + 1)
+              ) {
+                return (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => handlePageChange(page)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              } else if (
+                page === currentPage - 2 ||
+                page === currentPage + 2
+              ) {
+                return (
+                  <PaginationItem key={page}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )
+              }
+              return null
+            })}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+
+      {/* Add items per page selector */}
+      <div className="flex justify-end items-center gap-2 text-sm text-gray-600">
+        <span>Showing {paginatedTasks.length} of {filteredAndSortedTasks.length} items</span>
       </div>
     </div>
   )
