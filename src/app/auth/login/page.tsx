@@ -9,20 +9,31 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle } from "lucide-react"
 import { useUser } from "@/contexts/user-context"
+import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const router = useRouter()
   const { login } = useUser()
+  const { toast } = useToast()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const success = login(email, password)
     if (success) {
+      toast({
+        variant: "success",
+        title: "Success",
+        description: "Logged in successfully",
+      })
       router.push('/dashboard')
     } else {
-      alert('Invalid credentials')
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Invalid credentials",
+      })
     }
   }
 

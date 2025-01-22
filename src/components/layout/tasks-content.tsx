@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Pencil, X } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 const initialTasks = [
   {
@@ -58,6 +59,7 @@ export default function TaskContent() {
     startTime: "",
     endTime: "",
   })
+  const { toast } = useToast()
 
   const handleAddTask = () => {
     const taskToAdd = {
@@ -74,6 +76,11 @@ export default function TaskContent() {
       startTime: "",
       endTime: "",
     })
+    toast({
+      variant: "success",
+      title: "Success",
+      description: "Task added successfully",
+    })
   }
 
   const handleEditTask = () => {
@@ -81,12 +88,22 @@ export default function TaskContent() {
     setTasks(updatedTasks)
     setIsEditDialogOpen(false)
     setEditingTask(null)
+    toast({
+      variant: "success",
+      title: "Success",
+      description: "Task updated successfully",
+    })
   }
 
   const handleDeleteSelected = () => {
     const updatedTasks = tasks.filter((task) => !selectedTasks.includes(task.id))
     setTasks(updatedTasks)
     setSelectedTasks([])
+    toast({
+      variant: "success",
+      title: "Success",
+      description: `${selectedTasks.length} task(s) deleted successfully`,
+    })
   }
 
   const toggleTaskSelection = (taskId: number) => {

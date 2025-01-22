@@ -3,6 +3,7 @@ import { Geist, Azeret_Mono as Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { UserProvider } from "@/contexts/user-context"
 import Wrapper from "@/components/layout/wrapper"
+import { ToastProvider } from "@/providers/toast-provider"
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({
             {children}
           </Wrapper>
         </UserProvider>
+        <ToastProvider />
       </body>
     </html>
   )

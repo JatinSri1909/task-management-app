@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle } from "lucide-react"
 import { useUser } from "@/contexts/user-context"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SignupPage() {
   const [name, setName] = useState("")
@@ -16,11 +17,17 @@ export default function SignupPage() {
   const [password, setPassword] = useState("")
   const router = useRouter()
   const { signup } = useUser()
+  const { toast } = useToast()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const success = signup(name, email, password)
     if (success) {
+      toast({
+        variant: "success",
+        title: "Success",
+        description: "Account created successfully",
+      })
       router.push('/dashboard')
     }
   }
