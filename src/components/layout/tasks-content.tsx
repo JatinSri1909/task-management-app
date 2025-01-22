@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Pencil, X } from "lucide-react"
+import { Pencil, X, Plus, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 
@@ -135,13 +135,27 @@ export default function TaskContent() {
     setCurrentPage(page)
   }
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allTaskIds = paginatedTasks.map(task => task.id)
+      setSelectedTasks(allTaskIds)
+    } else {
+      setSelectedTasks([])
+    }
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between">
+      {/* Controls Section - Make it stack on mobile */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
+        {/* Left Controls - Updated for small and medium devices */}
         <div className="space-x-2">
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button>Add Task</Button>
+              <Button>
+                <Plus className="h-4 w-4 lg:hidden" />
+                <span className="hidden lg:inline">Add Task</span>
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
@@ -223,12 +237,15 @@ export default function TaskContent() {
             </DialogContent>
           </Dialog>
           <Button variant="destructive" onClick={handleDeleteSelected} disabled={selectedTasks.length === 0}>
-            Delete Selected
+            <Trash2 className="h-4 w-4 lg:hidden" />
+            <span className="hidden lg:inline">Delete Selected</span>
           </Button>
         </div>
-        <div className="flex space-x-2">
+        
+        {/* Right Controls - Make filters scroll horizontally on mobile */}
+        <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="min-w-[140px] sm:w-[180px]">
               <SelectValue placeholder="Sort" />
             </SelectTrigger>
             <SelectContent>
@@ -238,8 +255,9 @@ export default function TaskContent() {
               <SelectItem value="endTime:desc">End Time: Desc</SelectItem>
             </SelectContent>
           </Select>
+
           <Select value={filterPriority} onValueChange={setFilterPriority}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="min-w-[140px] sm:w-[180px]">
               <SelectValue placeholder="Priority" />
             </SelectTrigger>
             <SelectContent>
@@ -250,13 +268,20 @@ export default function TaskContent() {
               ))}
             </SelectContent>
           </Select>
+
           {filterPriority && (
-            <Button variant="ghost" size="icon" onClick={() => setFilterPriority("")}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="shrink-0"
+              onClick={() => setFilterPriority("")}
+            >
               <X className="h-4 w-4" />
             </Button>
           )}
+
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="min-w-[140px] sm:w-[180px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -264,25 +289,39 @@ export default function TaskContent() {
               <SelectItem value="Finished">Finished</SelectItem>
             </SelectContent>
           </Select>
+
           {filterStatus && (
-            <Button variant="ghost" size="icon" onClick={() => setFilterStatus("")}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="shrink-0"
+              onClick={() => setFilterStatus("")}
+            >
               <X className="h-4 w-4" />
             </Button>
           )}
         </div>
       </div>
-      <div className="rounded-md border bg-white">
+
+      {/* Table Section - Make it scroll horizontally on mobile */}
+      <div className="rounded-md border bg-white overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]"></TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Priority</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Start Time</TableHead>
-              <TableHead>End Time</TableHead>
-              <TableHead>Time to Finish (hrs)</TableHead>
-              <TableHead>Edit</TableHead>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={paginatedTasks.length > 0 && paginatedTasks.every(task => selectedTasks.includes(task.id))}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all"
+                />
+              </TableHead>
+              <TableHead className="min-w-[200px]">Title</TableHead>
+              <TableHead className="min-w-[100px]">Priority</TableHead>
+              <TableHead className="min-w-[100px]">Status</TableHead>
+              <TableHead className="min-w-[180px]">Start Time</TableHead>
+              <TableHead className="min-w-[180px]">End Time</TableHead>
+              <TableHead className="min-w-[140px]">Time to Finish (hrs)</TableHead>
+              <TableHead className="min-w-[80px]">Edit</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -399,61 +438,62 @@ export default function TaskContent() {
         </Table>
       </div>
 
-      {/* Add pagination controls */}
-      <div className="flex justify-center">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-            
-            {[...Array(totalPages)].map((_, index) => {
-              const page = index + 1
-              // Show first page, last page, and pages around current page
-              if (
-                page === 1 ||
-                page === totalPages ||
-                (page >= currentPage - 1 && page <= currentPage + 1)
-              ) {
-                return (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      onClick={() => handlePageChange(page)}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                )
-              } else if (
-                page === currentPage - 2 ||
-                page === currentPage + 2
-              ) {
-                return (
-                  <PaginationItem key={page}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                )
-              }
-              return null
-            })}
+      {/* Pagination Section - Make it stack on mobile */}
+      <div className="flex flex-col gap-4 items-center sm:items-stretch">
+        <div className="flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                  className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              
+              {[...Array(totalPages)].map((_, index) => {
+                const page = index + 1
+                // Show first page, last page, and pages around currentPage
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(page)}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                } else if (
+                  page === currentPage - 2 ||
+                  page === currentPage + 2
+                ) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )
+                }
+                return null
+              })}
 
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                  className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
 
-      {/* Add items per page selector */}
-      <div className="flex justify-end items-center gap-2 text-sm text-gray-600">
-        <span>Showing {paginatedTasks.length} of {filteredAndSortedTasks.length} items</span>
+        <div className="text-sm text-gray-600 text-center">
+          <span>Showing {paginatedTasks.length} of {filteredAndSortedTasks.length} items</span>
+        </div>
       </div>
     </div>
   )
