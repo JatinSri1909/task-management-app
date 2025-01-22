@@ -1,7 +1,10 @@
+"use client"
+
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { useRouter } from "next/navigation"
 
 const plans = [
   {
@@ -40,6 +43,9 @@ const plans = [
 ]
 
 export default function Pricing() {
+
+  const router = useRouter()
+  
   return (
     <section id="pricing" className="py-20 px-4 md:px-6 lg:px-8 relative">
       <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
@@ -82,6 +88,7 @@ export default function Pricing() {
                 <Button
                   className={`w-full rounded-full ${plan.popular ? "" : "bg-white text-blue-600 border border-blue-200 hover:bg-blue-50"}`}
                   variant={plan.popular ? "default" : "ghost"}
+                  onClick={() => router.push('/auth/login')}
                 >
                   Get Started
                 </Button>
