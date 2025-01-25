@@ -60,12 +60,15 @@ export interface User {
 }
 
 // API instance
+const baseURL = `${process.env.NEXT_PUBLIC_API_URL}api`;
+console.log('API Base URL:', baseURL);
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true // Important for cookies
+  withCredentials: true
 });
 
 // Add request interceptor for debugging
@@ -107,10 +110,25 @@ api.interceptors.response.use(
 export const auth = {
   login: async (email: string, password: string): Promise<{ token: string; user: User }> => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const url = '/auth/login';
+      console.log('Login Request:', {
+        url: baseURL + url,
+        email,
+        headers: api.defaults.headers
+      });
+      
+      const response = await api.post(url, { email, password });
+      console.log('Login Success:', response.data);
       return response.data;
     } catch (error: unknown) {
-      console.error('API Login Error:', error);
+      if (error instanceof AxiosError) {
+        console.error('Login Failed:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          url: baseURL + '/auth/login',
+          headers: error.response?.headers
+        });
+      }
       throw error;
     }
   },
