@@ -15,8 +15,8 @@ interface TaskDialogsProps {
   onEditClose: () => void
   onAddSubmit: () => void
   onEditSubmit: () => void
-  onNewTaskChange: (field: keyof CreateTaskInput, value: any) => void
-  onEditingTaskChange: (field: keyof Task, value: any) => void
+  onNewTaskChange: (field: keyof CreateTaskInput, value: string | number | Date) => void
+  onEditingTaskChange: (field: keyof Task, value: string | number | Date) => void
 }
 
 export default function TaskDialogs({

@@ -22,15 +22,9 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    
     try {
       const success = await login(email, password)
       if (success) {
-        toast({
-          variant: "success",
-          title: "Success",
-          description: "Logged in successfully",
-        })
         router.push('/dashboard')
       } else {
         toast({
@@ -39,12 +33,6 @@ export default function LoginPage() {
           description: "Invalid credentials",
         })
       }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Something went wrong",
-      })
     } finally {
       setIsLoading(false)
     }

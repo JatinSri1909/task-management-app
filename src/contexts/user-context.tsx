@@ -13,8 +13,8 @@ type User = {
 
 type UserContextType = {
   user: User | null
-  login: (email: string, password: string) => boolean
-  signup: (email: string, password: string) => boolean
+  login: (email: string, password: string) => Promise<boolean>
+  signup: (email: string, password: string) => Promise<boolean>
   logout: () => void
 }
 

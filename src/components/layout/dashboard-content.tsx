@@ -21,6 +21,10 @@ export default function DashboardContent() {
   if (loading) return <div>Loading...</div>
   if (error || !stats) return <div>Error loading dashboard</div>
 
+  // For percentages
+  const completedPercentage = Math.round((stats.completedTasks / stats.totalTasks) * 100)
+  const pendingPercentage = Math.round((stats.pendingTasks / stats.totalTasks) * 100)
+
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -29,7 +33,7 @@ export default function DashboardContent() {
             <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.overview.totalTasks}</div>
+            <div className="text-2xl font-bold">{stats.totalTasks}</div>
           </CardContent>
         </Card>
         <Card>
@@ -38,13 +42,13 @@ export default function DashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline justify-between">
-              <div className="text-2xl font-bold">{stats.overview.completedTasks}</div>
+              <div className="text-2xl font-bold">{stats.completedTasks}</div>
               <div className="text-sm text-muted-foreground">
-                {stats.overview.completedPercentage}%
+                {completedPercentage}%
               </div>
             </div>
             <Progress 
-              value={stats.overview.completedPercentage} 
+              value={completedPercentage} 
               className="mt-2"
               indicatorColor="bg-green-500"
             />
@@ -56,13 +60,13 @@ export default function DashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline justify-between">
-              <div className="text-2xl font-bold">{stats.overview.pendingTasks}</div>
+              <div className="text-2xl font-bold">{stats.pendingTasks}</div>
               <div className="text-sm text-muted-foreground">
-                {stats.overview.pendingPercentage}%
+                {pendingPercentage}%
               </div>
             </div>
             <Progress 
-              value={stats.overview.pendingPercentage} 
+              value={pendingPercentage} 
               className="mt-2"
               indicatorColor="bg-yellow-500"
             />
@@ -73,7 +77,7 @@ export default function DashboardContent() {
             <CardTitle className="text-sm font-medium">Avg. Time per Task</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.timeMetrics.averageCompletionTime} hrs</div>
+            <div className="text-2xl font-bold">{stats.averageTime} hrs</div>
           </CardContent>
         </Card>
       </div>
@@ -86,18 +90,18 @@ export default function DashboardContent() {
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <p className="text-sm font-medium">Pending Tasks</p>
-              <p className="text-2xl font-bold">{stats.overview.pendingTasks}</p>
+              <p className="text-2xl font-bold">{stats.pendingTasks}</p>
             </div>
             <div>
               <p className="text-sm font-medium">Total Time Elapsed</p>
               <p className="text-2xl font-bold">
-                {stats.timeMetrics.totalTimeElapsed} hrs
+                {stats.pendingSummary.timeLapsed} hrs
               </p>
             </div>
             <div>
               <p className="text-sm font-medium">Total Time to Finish</p>
               <p className="text-2xl font-bold">
-                {stats.timeMetrics.totalTimeToFinish} hrs
+                {stats.pendingSummary.timeToFinish} hrs
               </p>
             </div>
           </div>
@@ -120,16 +124,16 @@ export default function DashboardContent() {
             </TableHeader>
             <TableBody>
               {PRIORITY_LEVELS.map((priority) => {
-                const pendingData = stats.timeMetrics.pendingTasksByPriority.find(
+                const pendingData = stats.tasksByPriority.find(
                   r => r.priority === priority
-                ) || { count: 0, timeElapsed: 0, estimatedTimeLeft: 0 }
+                ) || { pendingTasks: 0, timeElapsed: 0, timeToFinish: 0, priority: 0 }
 
                 return (
                   <TableRow key={priority}>
                     <TableCell>{priority}</TableCell>
-                    <TableCell>{pendingData.count}</TableCell>
+                    <TableCell>{pendingData.pendingTasks}</TableCell>
                     <TableCell>{pendingData.timeElapsed}</TableCell>
-                    <TableCell>{pendingData.estimatedTimeLeft}</TableCell>
+                    <TableCell>{pendingData.timeToFinish}</TableCell>
                   </TableRow>
                 )
               })}

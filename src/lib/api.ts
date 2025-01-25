@@ -33,24 +33,21 @@ export interface TasksResponse {
 }
 
 export interface TaskStats {
-  overview: {
-    totalTasks: number;
-    completedTasks: number;
+  totalTasks: number;
+  completedTasks: number;
+  pendingTasks: number;
+  averageTime: number;
+  pendingSummary: {
     pendingTasks: number;
-    completedPercentage: number;
-    pendingPercentage: number;
+    timeLapsed: number;
+    timeToFinish: number;
   };
-  timeMetrics: {
-    averageCompletionTime: number;
-    totalTimeElapsed: number;
-    totalTimeToFinish: number;
-    pendingTasksByPriority: Array<{
-      priority: number;
-      count: number;
-      timeElapsed: number;
-      estimatedTimeLeft: number;
-    }>;
-  };
+  tasksByPriority: Array<{
+    priority: number;
+    pendingTasks: number;
+    timeElapsed: number;
+    timeToFinish: number;
+  }>;
 }
 
 // API instance
@@ -99,12 +96,12 @@ api.interceptors.response.use(
 
 // Auth API
 export const auth = {
-  login: async (email: string, password: string) => {
+  login: async (email: string, password: string): Promise<{ token: string; user: User }> => {
     try {
       const response = await api.post('/auth/login', { email, password });
       return response.data;
-    } catch (error: any) {
-      console.error('API Login Error:', error.response?.data || error);
+    } catch (error) {
+      console.error('API Login Error:', error);
       throw error;
     }
   },

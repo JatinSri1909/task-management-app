@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useToast } from './use-toast'
 
-interface PollingOptions {
-  interval?: number
-  onError?: (error: any) => void
-  fallbackData?: any
+interface PollingOptions<T> {
+  interval: number
+  fallbackData?: T
+  enabled?: boolean
 }
 
 export function usePolling<T>(
   fetchFn: () => Promise<T>,
-  options: PollingOptions = {}
+  options: PollingOptions<T>
 ) {
-  const { interval = 60000, onError, fallbackData } = options
+  const { interval = 60000, fallbackData, enabled } = options
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,11 +35,10 @@ export function usePolling<T>(
           description: `${errorMessage}. Using offline data.`,
         })
       }
-      onError?.(err)
     } finally {
       setLoading(false)
     }
-  }, [fetchFn, data, fallbackData, onError, toast])
+  }, [fetchFn, data, fallbackData, toast])
 
   useEffect(() => {
     fetch() // Initial fetch
