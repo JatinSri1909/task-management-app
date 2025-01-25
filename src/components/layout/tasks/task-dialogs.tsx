@@ -132,9 +132,9 @@ export default function TaskDialogs({
                 <Label htmlFor="edit-status" className="text-right">Status</Label>
                 <Switch
                   id="edit-status"
-                  checked={editingTask.status === "Finished"}
+                  checked={editingTask.status === "finished"}
                   onCheckedChange={(checked) => 
-                    onEditingTaskChange('status', checked ? "Finished" : "Pending")
+                    onEditingTaskChange('status', checked ? "finished" : "pending")
                   }
                 />
               </div>
