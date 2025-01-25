@@ -33,21 +33,25 @@ export interface TasksResponse {
 }
 
 export interface TaskStats {
-  totalTasks: number;
-  completedTasks: number;
-  pendingTasks: number;
-  averageTime: number;
-  pendingSummary: {
+  overview: {
+    totalTasks: number;
+    completedTasks: number;
     pendingTasks: number;
-    timeLapsed: number;
-    timeToFinish: number;
+    completedPercentage: number;
+    pendingPercentage: number;
+    averageTime: number;
   };
-  tasksByPriority: Array<{
-    priority: number;
-    pendingTasks: number;
-    timeElapsed: number;
-    timeToFinish: number;
-  }>;
+  timeMetrics: {
+    averageCompletionTime: number;
+    totalTimeElapsed: number;
+    totalTimeToFinish: number;
+    pendingTasksByPriority: Array<{
+      priority: number;
+      count: number;
+      timeElapsed: number;
+      estimatedTimeLeft: number;
+    }>;
+  };
 }
 
 // API instance

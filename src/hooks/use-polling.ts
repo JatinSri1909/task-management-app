@@ -21,9 +21,9 @@ export function usePolling<T>(
       setError(null)
       const result = await fetchFn()
       setData(result)
-    } catch (error: Error) {
+    } catch (error: unknown) {
       console.error('Polling error:', error)
-      const errorMessage = error.message || 'Failed to fetch data'
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch data'
       setError(errorMessage)
       
       if (!data && fallbackData) {

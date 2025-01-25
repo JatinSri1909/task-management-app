@@ -13,7 +13,7 @@ export default function DashboardContent() {
   const { data: stats, loading, error } = usePolling(
     () => tasks.getStats(),
     {
-      interval: 60000, // 1 minute
+      interval: 60000,
       fallbackData: dummyData.stats
     }
   )
@@ -22,8 +22,8 @@ export default function DashboardContent() {
   if (error || !stats) return <div>Error loading dashboard</div>
 
   // For percentages
-  const completedPercentage = Math.round((stats.completedTasks / stats.totalTasks) * 100)
-  const pendingPercentage = Math.round((stats.pendingTasks / stats.totalTasks) * 100)
+  const completedPercentage = Math.round((stats.overview.completedTasks / stats.overview.totalTasks) * 100)
+  const pendingPercentage = Math.round((stats.overview.pendingTasks / stats.overview.totalTasks) * 100)
 
   return (
     <div className="space-y-4">
@@ -33,7 +33,7 @@ export default function DashboardContent() {
             <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTasks}</div>
+            <div className="text-2xl font-bold">{stats.overview.totalTasks}</div>
           </CardContent>
         </Card>
         <Card>
@@ -42,7 +42,7 @@ export default function DashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline justify-between">
-              <div className="text-2xl font-bold">{stats.completedTasks}</div>
+              <div className="text-2xl font-bold">{stats.overview.completedTasks}</div>
               <div className="text-sm text-muted-foreground">
                 {completedPercentage}%
               </div>
@@ -60,7 +60,7 @@ export default function DashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline justify-between">
-              <div className="text-2xl font-bold">{stats.pendingTasks}</div>
+              <div className="text-2xl font-bold">{stats.overview.pendingTasks}</div>
               <div className="text-sm text-muted-foreground">
                 {pendingPercentage}%
               </div>
@@ -77,7 +77,7 @@ export default function DashboardContent() {
             <CardTitle className="text-sm font-medium">Avg. Time per Task</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.averageTime} hrs</div>
+            <div className="text-2xl font-bold">{stats.overview.averageTime} hrs</div>
           </CardContent>
         </Card>
       </div>
@@ -90,18 +90,18 @@ export default function DashboardContent() {
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <p className="text-sm font-medium">Pending Tasks</p>
-              <p className="text-2xl font-bold">{stats.pendingTasks}</p>
+              <p className="text-2xl font-bold">{stats.overview.pendingTasks}</p>
             </div>
             <div>
               <p className="text-sm font-medium">Total Time Elapsed</p>
               <p className="text-2xl font-bold">
-                {stats.pendingSummary.timeLapsed} hrs
+                {stats.timeMetrics.totalTimeElapsed} hrs
               </p>
             </div>
             <div>
               <p className="text-sm font-medium">Total Time to Finish</p>
               <p className="text-2xl font-bold">
-                {stats.pendingSummary.timeToFinish} hrs
+                {stats.timeMetrics.totalTimeToFinish} hrs
               </p>
             </div>
           </div>
@@ -124,16 +124,16 @@ export default function DashboardContent() {
             </TableHeader>
             <TableBody>
               {PRIORITY_LEVELS.map((priority) => {
-                const pendingData = stats.tasksByPriority.find(
+                const pendingData = stats.timeMetrics.pendingTasksByPriority.find(
                   r => r.priority === priority
-                ) || { pendingTasks: 0, timeElapsed: 0, timeToFinish: 0, priority: 0 }
+                ) || { count: 0, timeElapsed: 0, estimatedTimeLeft: 0 }
 
                 return (
                   <TableRow key={priority}>
                     <TableCell>{priority}</TableCell>
-                    <TableCell>{pendingData.pendingTasks}</TableCell>
+                    <TableCell>{pendingData.count}</TableCell>
                     <TableCell>{pendingData.timeElapsed}</TableCell>
-                    <TableCell>{pendingData.timeToFinish}</TableCell>
+                    <TableCell>{pendingData.estimatedTimeLeft}</TableCell>
                   </TableRow>
                 )
               })}
