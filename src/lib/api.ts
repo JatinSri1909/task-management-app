@@ -54,6 +54,11 @@ export interface TaskStats {
   };
 }
 
+export interface User {
+  id: string;
+  email: string;
+}
+
 // API instance
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
