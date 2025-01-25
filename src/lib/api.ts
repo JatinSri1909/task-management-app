@@ -110,8 +110,8 @@ export const auth = {
     try {
       const response = await api.post('/auth/signup', { email, password });
       return response.data;
-    } catch (error: any) {
-      console.error('API Signup Error:', error.response?.data || error);
+    } catch (error: Error) {
+      console.error('API Signup Error:', error);
       throw error;
     }
   }
