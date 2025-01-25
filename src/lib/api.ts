@@ -119,7 +119,7 @@ export const auth = {
     try {
       const response = await api.post('/auth/signup', { email, password });
       return response.data;
-    } catch (error: Error) {
+    } catch (error: unknown) {
       console.error('API Signup Error:', error);
       throw error;
     }
