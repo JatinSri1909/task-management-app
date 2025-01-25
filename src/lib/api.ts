@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Cookies from 'js-cookie';
 
 // Types
@@ -167,7 +167,7 @@ export const tasks = {
         error,
         id,
         task,
-        response: (error as any).response?.data
+        response: error instanceof AxiosError ? error.response?.data : undefined
       });
       throw error;
     }
