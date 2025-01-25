@@ -87,10 +87,10 @@ export default function TaskContent() {
       const updatedTask = await tasks.update(editingTask.id, updatePayload)
       console.log('Task updated successfully:', updatedTask);
       
-      toast({
-        title: "Success",
-        description: "Task updated successfully",
-      })
+    toast({
+      title: "Success",
+      description: "Task updated successfully",
+    })
       refetch()
       setIsEditDialogOpen(false)
       setEditingTask(null)
