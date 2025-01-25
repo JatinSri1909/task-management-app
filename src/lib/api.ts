@@ -109,7 +109,7 @@ export const auth = {
     try {
       const response = await api.post('/auth/login', { email, password });
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('API Login Error:', error);
       throw error;
     }
@@ -162,12 +162,12 @@ export const tasks = {
       console.log('Update response:', response.data);
       
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('API Update Error:', {
         error,
         id,
         task,
-        response: error.response?.data
+        response: (error as any).response?.data
       });
       throw error;
     }
