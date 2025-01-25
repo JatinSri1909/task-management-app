@@ -1,64 +1,69 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
 import { createContext, useContext, useState, useEffect } from 'react'
 import Cookies from 'js-cookie'
+import { auth } from '../lib/api'
 
 type User = {
   id: string
-  name: string
   email: string
 }
 
 type UserContextType = {
   user: User | null
   login: (email: string, password: string) => boolean
-  signup: (name: string, email: string, password: string) => boolean
+  signup: (email: string, password: string) => boolean
   logout: () => void
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
-
-// Sample user data
-const SAMPLE_USER = {
-  id: "1",
-  name: "John Doe",
-  email: "john@example.com",
-  password: "password123"
-}
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check both localStorage and cookies on mount
     const storedUser = localStorage.getItem('user')
     if (storedUser) {
       const userData = JSON.parse(storedUser)
       setUser(userData)
-      Cookies.set('user', 'true', { expires: 7 }) // Set cookie for 7 days
+      Cookies.set('user', 'true', { expires: 7 })
     }
     setIsLoading(false)
   }, [])
 
-  const login = (email: string, password: string) => {
-    if (email === SAMPLE_USER.email && password === SAMPLE_USER.password) {
-      const userData = { id: SAMPLE_USER.id, name: SAMPLE_USER.name, email: SAMPLE_USER.email }
-      setUser(userData)
-      localStorage.setItem('user', JSON.stringify(userData))
-      Cookies.set('user', 'true', { expires: 7 })
-      return true
+  const login = async (email: string, password: string) => {
+    try {
+      const { token, user } = await auth.login(email, password);
+      if (token && user) {
+        Cookies.set('token', token, { expires: 30 });
+        setUser(user);
+        localStorage.setItem('user', JSON.stringify(user));
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error('Login failed:', error.response?.data?.message || error);
+      return false;
     }
-    return false
   }
 
-  const signup = (name: string, email: string, password: string) => {
-    const userData = { id: "2", name, email }
-    setUser(userData)
-    localStorage.setItem('user', JSON.stringify(userData))
-    Cookies.set('user', 'true', { expires: 7 })
-    return true
+  const signup = async (email: string, password: string) => {
+    try {
+      const { token, user } = await auth.signup(email, password);
+      if (token && user) {
+        Cookies.set('token', token, { expires: 30 });
+        setUser(user);
+        localStorage.setItem('user', JSON.stringify(user));
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error('Signup failed:', error.response?.data?.message || error);
+      return false;
+    }
   }
 
   const logout = () => {
@@ -68,7 +73,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }
 
   if (isLoading) {
-    return null // or a loading spinner
+    return null
   }
 
   return (

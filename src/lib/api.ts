@@ -1,95 +1,178 @@
 import axios from 'axios';
-import { auth } from './auth';
+import Cookies from 'js-cookie';
 
 // Types
 export interface Task {
   id: string;
   title: string;
-  startTime: Date;
-  endTime: Date;
   priority: 1 | 2 | 3 | 4 | 5;
   status: 'pending' | 'finished';
+  startTime: string;
+  endTime: string;
   userId: string;
 }
 
 export interface CreateTaskInput {
   title: string;
+  priority: 1 | 2 | 3 | 4 | 5;
   startTime: Date;
   endTime: Date;
-  priority: 1 | 2 | 3 | 4 | 5;
 }
 
-export interface UpdateTaskInput extends Partial<CreateTaskInput> {
+export interface UpdateTaskInput {
+  title?: string;
+  priority?: 1 | 2 | 3 | 4 | 5;
   status?: 'pending' | 'finished';
-}
-
-export interface TaskStats {
-  totalTasks: number;
-  completedPercentage: number;
-  pendingPercentage: number;
-  pendingTasksByPriority: {
-    priority: number;
-    timeElapsed: number;
-    estimatedTimeLeft: number;
-  }[];
-  averageCompletionTime: number;
+  startTime?: Date;
+  endTime?: Date;
 }
 
 export interface TasksResponse {
   tasks: Task[];
   total: number;
-  page: number;
-  limit: number;
 }
 
-// API class
-export const api = {
-  // Configure axios instance
-  init: () => {
-    axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
-    
-    // Add auth header interceptor
-    axios.interceptors.request.use((config) => {
-      const token = auth.getToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
+export interface TaskStats {
+  overview: {
+    totalTasks: number;
+    completedTasks: number;
+    pendingTasks: number;
+    completedPercentage: number;
+    pendingPercentage: number;
+  };
+  timeMetrics: {
+    averageCompletionTime: number;
+    totalTimeElapsed: number;
+    totalTimeToFinish: number;
+    pendingTasksByPriority: Array<{
+      priority: number;
+      count: number;
+      timeElapsed: number;
+      estimatedTimeLeft: number;
+    }>;
+  };
+}
+
+// API instance
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true // Important for cookies
+});
+
+// Add request interceptor for debugging
+api.interceptors.request.use((config) => {
+  console.log('API Request:', {
+    url: config.url,
+    method: config.method,
+    headers: config.headers,
+  });
+  const token = Cookies.get('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Add response interceptor for debugging
+api.interceptors.response.use(
+  (response) => {
+    console.log('API Response:', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data,
     });
+    return response;
   },
+  (error) => {
+    console.error('API Error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+    });
+    return Promise.reject(error);
+  }
+);
 
-  // Tasks
-  tasks: {
-    getAll: async (page = 1, limit = 10, filters?: { priority?: number; status?: string }, sort?: { field: string; order: 'asc' | 'desc' }): Promise<TasksResponse> => {
-      const response = await axios.get('/api/tasks', { params: { page, limit, ...filters, ...sort } });
+// Auth API
+export const auth = {
+  login: async (email: string, password: string) => {
+    try {
+      const response = await api.post('/auth/login', { email, password });
       return response.data;
-    },
-
-    getById: async (id: string): Promise<Task> => {
-      const response = await axios.get(`/api/tasks/${id}`);
-      return response.data;
-    },
-
-    create: async (task: CreateTaskInput): Promise<Task> => {
-      const response = await axios.post('/api/tasks', task);
-      return response.data;
-    },
-
-    update: async (id: string, updates: UpdateTaskInput): Promise<Task> => {
-      const response = await axios.patch(`/api/tasks/${id}`, updates);
-      return response.data;
-    },
-
-    delete: async (id: string): Promise<void> => {
-      await axios.delete(`/api/tasks/${id}`);
+    } catch (error: any) {
+      console.error('API Login Error:', error.response?.data || error);
+      throw error;
     }
   },
 
-  // Dashboard
-  dashboard: {
-    getStats: async (): Promise<TaskStats> => {
-      const response = await axios.get('/api/tasks/stats');
+  signup: async (email: string, password: string) => {
+    try {
+      const response = await api.post('/auth/signup', { email, password });
       return response.data;
+    } catch (error: any) {
+      console.error('API Signup Error:', error.response?.data || error);
+      throw error;
     }
+  }
+};
+
+// Tasks API
+export const tasks = {
+  getAll: async (params: {
+    page?: number;
+    limit?: number;
+    priority?: number;
+    status?: string;
+    field?: string;
+    order?: 'asc' | 'desc';
+  }) => {
+    const response = await api.get<TasksResponse>('/tasks', { params });
+    return response.data;
+  },
+
+  create: async (task: CreateTaskInput) => {
+    const response = await api.post<Task>('/tasks', task);
+    return response.data;
+  },
+
+  update: async (id: string, task: UpdateTaskInput) => {
+    try {
+      console.log('Updating task:', { id, task });
+      
+      const payload = {
+        ...task,
+        startTime: task.startTime?.toISOString(),
+        endTime: task.endTime?.toISOString()
+      };
+      
+      console.log('API payload:', payload);
+      
+      const response = await api.patch<Task>(`/tasks/${id}`, payload);
+      
+      console.log('Update response:', response.data);
+      
+      return response.data;
+    } catch (error) {
+      console.error('API Update Error:', {
+        error,
+        id,
+        task,
+        response: error.response?.data
+      });
+      throw error;
+    }
+  },
+
+  delete: async (id: string) => {
+    await api.delete(`/tasks/${id}`);
+  },
+
+  getStats: async () => {
+    const response = await api.get<TaskStats>('/tasks/stats');
+    return response.data;
   }
 };

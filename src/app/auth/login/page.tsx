@@ -14,26 +14,39 @@ import { useToast } from "@/hooks/use-toast"
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { login } = useUser()
   const { toast } = useToast()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const success = login(email, password)
-    if (success) {
-      toast({
-        variant: "success",
-        title: "Success",
-        description: "Logged in successfully",
-      })
-      router.push('/dashboard')
-    } else {
+    setIsLoading(true)
+    
+    try {
+      const success = await login(email, password)
+      if (success) {
+        toast({
+          variant: "success",
+          title: "Success",
+          description: "Logged in successfully",
+        })
+        router.push('/dashboard')
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Invalid credentials",
+        })
+      }
+    } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Invalid credentials",
+        description: "Something went wrong",
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -74,7 +87,7 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading}>
               Sign In
             </Button>
           </form>

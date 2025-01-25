@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
 import { useState } from "react"
@@ -12,23 +13,45 @@ import { useUser } from "@/contexts/user-context"
 import { useToast } from "@/hooks/use-toast"
 
 export default function SignupPage() {
-  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { signup } = useUser()
   const { toast } = useToast()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const success = signup(name, email, password)
-    if (success) {
+    
+    if (password !== confirmPassword) {
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Account created successfully",
+        variant: "destructive",
+        title: "Error",
+        description: "Passwords do not match",
       })
-      router.push('/dashboard')
+      return
+    }
+
+    setIsLoading(true)
+    
+    try {
+      const success = await signup(email, password)
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Account created successfully",
+        })
+        router.push('/dashboard')
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create account",
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -48,17 +71,6 @@ export default function SignupPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -80,8 +92,18 @@ export default function SignupPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full">
-              Sign Up
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Creating Account..." : "Sign Up"}
             </Button>
           </form>
         </CardContent>
