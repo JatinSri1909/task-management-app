@@ -61,13 +61,10 @@ export interface User {
 
 // API instance
 const baseURL = `${process.env.NEXT_PUBLIC_API_URL}api`;
-console.log('API Base URL:', baseURL);
-
-// Add environment logging
-console.log('Environment:', {
+console.log('Environment Setup:', {
   nodeEnv: process.env.NODE_ENV,
-  apiUrl: process.env.NEXT_PUBLIC_API_URL,
-  baseURL
+  baseURL,
+  apiUrl: process.env.NEXT_PUBLIC_API_URL
 });
 
 const api = axios.create({
@@ -95,10 +92,10 @@ api.interceptors.request.use((config) => {
 // Add response interceptor for debugging
 api.interceptors.response.use(
   (response) => {
-    console.log('API Response:', {
+    console.log('API Success:', {
       url: response.config.url,
       status: response.status,
-      data: response.data,
+      headers: response.headers
     });
     return response;
   },
@@ -108,6 +105,8 @@ api.interceptors.response.use(
       status: error.response?.status,
       data: error.response?.data,
       message: error.message,
+      headers: error.response?.headers,
+      origin: window.location.origin
     });
     return Promise.reject(error);
   }
@@ -136,6 +135,11 @@ export const auth = {
           headers: error.response?.headers,
           environment: process.env.NODE_ENV
         });
+        
+        throw new Error(
+          error.response?.data?.message || 
+          'Invalid credentials. Please try again.'
+        );
       }
       throw error;
     }
@@ -166,7 +170,7 @@ export const auth = {
         
         throw new Error(
           error.response?.data?.message || 
-          'Failed to create account'
+          'Failed to create account. Please try again.'
         );
       }
       throw error;
