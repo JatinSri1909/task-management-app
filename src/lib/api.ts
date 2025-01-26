@@ -1,7 +1,12 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Cookies from 'js-cookie';
 
 // Types
+export interface User {
+  id: string;
+  email: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -110,8 +115,10 @@ export const auth = {
     try {
       const response = await api.post('/auth/signup', { email, password });
       return response.data;
-    } catch (error: any) {
-      console.error('API Signup Error:', error.response?.data || error);
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        console.error('API Signup Error:', error.response?.data || error);
+      }
       throw error;
     }
   }
@@ -153,13 +160,15 @@ export const tasks = {
       console.log('Update response:', response.data);
       
       return response.data;
-    } catch (error) {
-      console.error('API Update Error:', {
-        error,
-        id,
-        task,
-        response: error.response?.data
-      });
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        console.error('API Update Error:', {
+          error,
+          id,
+          task,
+          response: error.response?.data
+        });
+      }
       throw error;
     }
   },
