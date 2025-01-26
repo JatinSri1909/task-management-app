@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import Cookies from 'js-cookie';
 
 // Types
@@ -64,6 +65,13 @@ export interface TaskStats {
 }
 
 // API instance
+const baseURL = `${process.env.NEXT_PUBLIC_API_URL}api`;
+console.log('Environment Setup:', {
+  nodeEnv: process.env.NODE_ENV,
+  baseURL,
+  apiUrl: process.env.NEXT_PUBLIC_API_URL
+});
+
 const api = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api`,
   headers: {
@@ -89,10 +97,10 @@ api.interceptors.request.use((config) => {
 // Add response interceptor for debugging
 api.interceptors.response.use(
   (response) => {
-    console.log('API Response:', {
+    console.log('API Success:', {
       url: response.config.url,
       status: response.status,
-      data: response.data,
+      headers: response.headers
     });
     return response;
   },
@@ -102,6 +110,8 @@ api.interceptors.response.use(
       status: error.response?.status,
       data: error.response?.data,
       message: error.message,
+      headers: error.response?.headers,
+      origin: window.location.origin
     });
     return Promise.reject(error);
   }

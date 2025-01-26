@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
 import { createContext, useContext, useState, useEffect } from 'react'
@@ -43,26 +42,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('user', JSON.stringify(user));
         return true;
       }
-      return false;
-    } catch (error: any) {
-      console.error('Login failed:', error.response?.data?.message || error);
-      return false;
+      throw new Error('Invalid login response');
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error; // Throw error to be caught by the page component
     }
   }
 
   const signup = async (email: string, password: string) => {
     try {
-      const { token, user } = await auth.signup(email, password);
-      if (token && user) {
-        Cookies.set('token', token, { expires: 30 });
-        setUser(user);
-        localStorage.setItem('user', JSON.stringify(user));
-        return true;
-      }
-      return false;
-    } catch (error: any) {
-      console.error('Signup failed:', error.response?.data?.message || error);
-      return false;
+      const response = await auth.signup(email, password);
+      console.log('Signup response:', response);
+      return response;
+    } catch (error) {
+      console.error('Signup failed:', error);
+      throw error; // Make sure to throw the error for the page to catch
     }
   }
 

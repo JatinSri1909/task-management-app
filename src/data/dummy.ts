@@ -9,20 +9,24 @@ export const dummyData = {
 
   // Dashboard data
   stats: {
-    totalTasks: 50,
-    completedTasks: 30,
-    pendingTasks: 20,
-    averageTime: 2.5,
-    pendingSummary: {
+    overview: {
+      totalTasks: 50,
+      completedTasks: 30,
       pendingTasks: 20,
-      timeLapsed: 48,
-      timeToFinish: 72,
+      completedPercentage: 60,
+      pendingPercentage: 40,
+      averageTime: 2.5,
     },
-    tasksByPriority: [
-      { priority: 5, pendingTasks: 5, timeElapsed: 10, timeToFinish: 15 },
-      { priority: 3, pendingTasks: 10, timeElapsed: 24, timeToFinish: 36 },
-      { priority: 1, pendingTasks: 5, timeElapsed: 14, timeToFinish: 21 },
-    ]
+    timeMetrics: {
+      averageCompletionTime: 2.5,
+      totalTimeElapsed: 48,
+      totalTimeToFinish: 72,
+      pendingTasksByPriority: [
+        { priority: 5, count: 5, timeElapsed: 10, estimatedTimeLeft: 15 },
+        { priority: 3, count: 10, timeElapsed: 24, estimatedTimeLeft: 36 },
+        { priority: 1, count: 5, timeElapsed: 14, estimatedTimeLeft: 21 },
+      ]
+    }
   },
 
   // Tasks data

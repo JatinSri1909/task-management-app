@@ -22,17 +22,30 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+
     try {
       const success = await login(email, password)
       if (success) {
-        router.push('/dashboard')
-      } else {
         toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Invalid credentials",
+          title: "Success",
+          description: "Logged in successfully",
+          variant: "default",
+          duration: 3000,
         })
+
+        // Small delay to show the toast before redirect
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 1000)
       }
+    } catch (error) {
+      console.error('Login error:', error)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Invalid credentials',
+        duration: 4000,
+      })
     } finally {
       setIsLoading(false)
     }

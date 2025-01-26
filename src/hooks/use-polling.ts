@@ -4,14 +4,19 @@ import { useToast } from './use-toast'
 interface PollingOptions<T> {
   interval: number
   fallbackData?: T
-  enabled?: boolean
+}
+
+interface PollingResult<T> {
+  data: T | null;
+  isLoading: boolean;
+  error: Error | null;
 }
 
 export function usePolling<T>(
   fetchFn: () => Promise<T>,
   options: PollingOptions<T>
-) {
-  const { interval = 60000, fallbackData, enabled } = options
+): PollingResult<T> {
+  const { interval = 60000, fallbackData } = options
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -22,9 +27,9 @@ export function usePolling<T>(
       setError(null)
       const result = await fetchFn()
       setData(result)
-    } catch (err: any) {
-      console.error('Polling error:', err)
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch data'
+    } catch (error: unknown) {
+      console.error('Polling error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch data'
       setError(errorMessage)
       
       if (!data && fallbackData) {
@@ -48,5 +53,9 @@ export function usePolling<T>(
     return () => clearInterval(intervalId)
   }, [fetch, interval])
 
-  return { data, loading, error, refetch: fetch }
+  return {
+    data: data || options.fallbackData || null,
+    isLoading: loading,
+    error: error ? new Error(error) : null
+  }
 } 

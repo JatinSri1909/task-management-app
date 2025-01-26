@@ -13,7 +13,6 @@ import TaskDialogs from "./tasks/task-dialogs"
 import TaskPagination from "./tasks/task-pagination"
 import { tasks } from "@/lib/api"
 import type { Task, CreateTaskInput } from "@/lib/api"
-import { dummyData } from "@/data/dummy"
 import { usePolling } from "@/hooks/use-polling"
 import React from "react"
 import { AxiosError } from "axios"
@@ -30,18 +29,19 @@ export default function TaskContent() {
   const itemsPerPage = 10
   const { toast } = useToast()
 
-  const { data: taskData, loading, error, refetch } = usePolling(
-    () => tasks.getAll({
-      page: currentPage,
-      limit: itemsPerPage,
-      priority: filterPriority ? Number(filterPriority) : undefined,
-      status: filterStatus || undefined,
-      field: sortBy.split(':')[0],
-      order: sortBy.split(':')[1] as 'asc' | 'desc'
-    }),
+  const queryParams = {
+    page: currentPage,
+    limit: itemsPerPage,
+    priority: filterPriority ? Number(filterPriority) : undefined,
+    status: filterStatus || undefined,
+    field: sortBy.split(':')[0],
+    order: sortBy.split(':')[1] as 'asc' | 'desc'
+  }
+
+  const { data, isLoading } = usePolling(
+    () => tasks.getAll(queryParams),
     {
-      interval: 30000, // 30 seconds
-      fallbackData: { tasks: dummyData.tasks, total: dummyData.tasks.length }
+      interval: 30000,
     }
   )
 
