@@ -7,29 +7,63 @@ import { Progress } from "@/components/ui/progress"
 import { usePolling } from "@/hooks/use-polling"
 import { Skeleton } from "@/components/ui/skeleton"
 
+const PRIORITY_LEVELS = [5, 4, 3, 2, 1]
+
 export default function DashboardContent() {
-  const { data: stats, loading } = usePolling(
+  const { data: stats, isLoading } = usePolling(
     () => tasks.getStats(),
-    { 
+    {
       interval: 60000,
-      enabled: true
     }
   )
 
-  console.log('Dashboard loading state:', { loading, stats })
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Stats Cards Skeletons */}
+        {[...Array(4)].map((_, i) => (
+          <Card key={i} className="p-6">
+            <Skeleton className="h-8 w-[120px] mb-4" />
+            <Skeleton className="h-10 w-[180px]" />
+          </Card>
+        ))}
 
-  if (loading || !stats) {
-    return <DashboardSkeleton />;
+        {/* Charts Skeleton */}
+        <Card className="col-span-2">
+          <CardHeader>
+            <Skeleton className="h-8 w-[200px]" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full" />
+          </CardContent>
+        </Card>
+
+        {/* Priority Table Skeleton */}
+        <Card className="col-span-2">
+          <CardHeader>
+            <Skeleton className="h-8 w-[200px]" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex justify-between items-center">
+                  <Skeleton className="h-4 w-[100px]" />
+                  <Skeleton className="h-4 w-[60px]" />
+                  <Skeleton className="h-4 w-[80px]" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
-  const { overview, timeMetrics } = stats
+  if (!stats) return <div>Error loading dashboard</div>
 
-  // Calculate percentages safely
-  const totalTasks = overview.totalTasks || 0;
-  const completedPercentage = totalTasks ? Math.round((overview.completedTasks / totalTasks) * 100) : 0;
-  const pendingPercentage = totalTasks ? Math.round((overview.pendingTasks / totalTasks) * 100) : 0;
-
-  const PRIORITY_LEVELS = [5, 4, 3, 2, 1];
+  // For percentages
+  const completedPercentage = Math.round((stats.overview.completedTasks / stats.overview.totalTasks) * 100)
+  const pendingPercentage = Math.round((stats.overview.pendingTasks / stats.overview.totalTasks) * 100)
 
   return (
     <div className="space-y-4">
@@ -39,7 +73,7 @@ export default function DashboardContent() {
             <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{overview.totalTasks}</div>
+            <div className="text-2xl font-bold">{stats.overview.totalTasks}</div>
           </CardContent>
         </Card>
         <Card>
@@ -48,7 +82,7 @@ export default function DashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline justify-between">
-              <div className="text-2xl font-bold">{overview.completedTasks}</div>
+              <div className="text-2xl font-bold">{stats.overview.completedTasks}</div>
               <div className="text-sm text-muted-foreground">
                 {completedPercentage}%
               </div>
@@ -66,7 +100,7 @@ export default function DashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline justify-between">
-              <div className="text-2xl font-bold">{overview.pendingTasks}</div>
+              <div className="text-2xl font-bold">{stats.overview.pendingTasks}</div>
               <div className="text-sm text-muted-foreground">
                 {pendingPercentage}%
               </div>
@@ -83,9 +117,7 @@ export default function DashboardContent() {
             <CardTitle className="text-sm font-medium">Avg. Time per Task</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {timeMetrics.averageCompletionTime.toFixed(1)} hrs
-            </div>
+            <div className="text-2xl font-bold">{stats.overview.averageTime} hrs</div>
           </CardContent>
         </Card>
       </div>
@@ -98,15 +130,19 @@ export default function DashboardContent() {
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <p className="text-sm font-medium">Pending Tasks</p>
-              <p className="text-2xl font-bold">{overview.pendingTasks || 0}</p>
+              <p className="text-2xl font-bold">{stats.overview.pendingTasks}</p>
             </div>
             <div>
               <p className="text-sm font-medium">Total Time Elapsed</p>
-              <p className="text-2xl font-bold">{timeMetrics.totalTimeElapsed} hrs</p>
+              <p className="text-2xl font-bold">
+                {stats.timeMetrics.totalTimeElapsed} hrs
+              </p>
             </div>
             <div>
               <p className="text-sm font-medium">Total Time to Finish</p>
-              <p className="text-2xl font-bold">{timeMetrics.totalTimeToFinish} hrs</p>
+              <p className="text-2xl font-bold">
+                {stats.timeMetrics.totalTimeToFinish} hrs
+              </p>
             </div>
           </div>
         </CardContent>
@@ -120,90 +156,29 @@ export default function DashboardContent() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Priority</TableHead>
-                <TableHead>Count</TableHead>
-                <TableHead>Time Elapsed</TableHead>
-                <TableHead>Time Left</TableHead>
+                <TableHead>Task Priority</TableHead>
+                <TableHead>Pending Tasks</TableHead>
+                <TableHead>Time Elapsed (hrs)</TableHead>
+                <TableHead>Time to Finish (hrs)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {PRIORITY_LEVELS.map((priority) => {
-                const priorityData = timeMetrics.pendingTasksByPriority.find(
-                  item => item.priority === priority
-                ) || {
-                  priority,
-                  count: 0,
-                  timeElapsed: 0,
-                  estimatedTimeLeft: 0
-                };
+                const pendingData = stats.timeMetrics.pendingTasksByPriority.find(
+                  r => r.priority === priority
+                ) || { count: 0, timeElapsed: 0, estimatedTimeLeft: 0 }
 
                 return (
                   <TableRow key={priority}>
                     <TableCell>{priority}</TableCell>
-                    <TableCell>{priorityData.count}</TableCell>
-                    <TableCell>{priorityData.timeElapsed}</TableCell>
-                    <TableCell>{priorityData.estimatedTimeLeft}</TableCell>
+                    <TableCell>{pendingData.count}</TableCell>
+                    <TableCell>{pendingData.timeElapsed}</TableCell>
+                    <TableCell>{pendingData.estimatedTimeLeft}</TableCell>
                   </TableRow>
-                );
+                )
               })}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-4">
-      {/* Stats Cards Skeleton */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-[120px]" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-[80px]" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Summary Card Skeleton */}
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-[200px]" />
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i}>
-                <Skeleton className="h-4 w-[100px] mb-2" />
-                <Skeleton className="h-8 w-[80px]" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Priority Table Skeleton */}
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-[180px]" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex justify-between">
-                <Skeleton className="h-4 w-[60px]" />
-                <Skeleton className="h-4 w-[60px]" />
-                <Skeleton className="h-4 w-[80px]" />
-                <Skeleton className="h-4 w-[80px]" />
-              </div>
-            ))}
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -10,6 +10,7 @@ interface PollingResult<T> {
   data: T | null;
   isLoading: boolean;
   error: Error | null;
+  refetch: () => Promise<void>;
 }
 
 export function usePolling<T>(
@@ -56,6 +57,7 @@ export function usePolling<T>(
   return {
     data: data || options.fallbackData || null,
     isLoading: loading,
-    error: error ? new Error(error) : null
+    error: error ? new Error(error) : null,
+    refetch: fetch
   }
 } 

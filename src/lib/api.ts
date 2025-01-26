@@ -64,7 +64,7 @@ export interface TaskStats {
 }
 
 // API instance
-const baseURL = `${process.env.NEXT_PUBLIC_API_URL}api`;
+const baseURL = `${process.env.NEXT_PUBLIC_API_URL}/api`;
 console.log('Environment Setup:', {
   nodeEnv: process.env.NODE_ENV,
   baseURL,
