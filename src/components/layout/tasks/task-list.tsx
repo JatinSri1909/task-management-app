@@ -93,12 +93,12 @@ export default function TaskList({
               </TableCell>
             </TableRow>
           ) : (
-            tasks.map((task, index) => (
+            tasks.map((task) => (
               <TableRow key={task._id}>
                 <TableCell>
                   <Checkbox
                     checked={selectedTasks.includes(task._id)}
-                    onCheckedChange={(checked) => onTaskSelect(task._id)}
+                    onCheckedChange={() => onTaskSelect(task._id)}
                     aria-label={`Select task ${task.title}`}
                   />
                 </TableCell>
