@@ -12,7 +12,7 @@ type User = {
 type UserContextType = {
   user: User | null
   login: (email: string, password: string) => Promise<boolean>
-  signup: (email: string, password: string) => Promise<boolean>
+  signup: (email: string, password: string) => Promise<{ success: boolean; user: User }>
   logout: () => void
 }
 
@@ -50,12 +50,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const signup = async (email: string, password: string) => {
     try {
-      const response = await auth.signup(email, password);
-      console.log('Signup response:', response);
-      return response;
+      const { token, user } = await auth.signup(email, password);
+      if (token && user) {
+        Cookies.set('token', token, { expires: 30 });
+        setUser(user);
+        localStorage.setItem('user', JSON.stringify(user));
+        return { success: true, user };
+      }
+      throw new Error('Invalid signup response');
     } catch (error) {
       console.error('Signup failed:', error);
-      throw error; // Make sure to throw the error for the page to catch
+      throw error;
     }
   }
 

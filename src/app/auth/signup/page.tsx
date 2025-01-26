@@ -35,9 +35,7 @@ export default function SignupPage() {
     setIsLoading(true)
     
     try {
-      const response = await signup(email, password)
-      console.log('Signup successful:', response)
-      
+      await signup(email, password)
       toast({
         title: "Success",
         description: "Account created successfully",
@@ -45,10 +43,8 @@ export default function SignupPage() {
         duration: 3000,
       })
 
-      setTimeout(() => {
-        router.push('/auth/login')
-      }, 1000)
-
+      // Redirect to dashboard instead of login
+      router.push('/dashboard')
     } catch (error) {
       console.error('Signup error:', error)
       toast({
