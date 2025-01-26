@@ -58,9 +58,9 @@ export default function TaskDialogs({
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  {[1, 2, 3, 4, 5].map((p) => (
+                  {[5, 4, 3, 2, 1].map((p) => (
                     <SelectItem key={p} value={p.toString()}>
-                      Priority {p}
+                      {p}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -100,69 +100,83 @@ export default function TaskDialogs({
             <DialogHeader>
               <DialogTitle>Edit Task</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-title" className="text-right">Title</Label>
-                <Input
-                  id="edit-title"
-                  value={editingTask.title}
-                  onChange={(e) => onEditingTaskChange('title', e.target.value)}
-                  className="col-span-3"
-                />
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              console.log('Form submitted with task:', editingTask);
+              onEditSubmit();
+            }}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-title" className="text-right">Title</Label>
+                  <Input
+                    id="edit-title"
+                    value={editingTask.title}
+                    onChange={(e) => onEditingTaskChange('title', e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-priority" className="text-right">Priority</Label>
+                  <Select
+                    value={editingTask.priority.toString()}
+                    onValueChange={(value) => onEditingTaskChange('priority', parseInt(value))}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[5, 4, 3, 2, 1].map((p) => (
+                        <SelectItem key={p} value={p.toString()}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-status" className="text-right">Status</Label>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="edit-status"
+                      checked={editingTask.status === "finished"}
+                      onCheckedChange={(checked) => 
+                        onEditingTaskChange('status', checked ? "finished" : "pending")
+                      }
+                      className={editingTask.status === "finished" ? "bg-green-500" : "bg-red-500"}
+                    />
+                    <span>{editingTask.status === "finished" ? "Finished" : "Pending"}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-startTime" className="text-right">Start Time</Label>
+                  <Input
+                    id="edit-startTime"
+                    type="datetime-local"
+                    value={new Date(editingTask.startTime).toISOString().slice(0, 16)}
+                    onChange={(e) => onEditingTaskChange('startTime', new Date(e.target.value))}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-endTime" className="text-right">End Time</Label>
+                  <Input
+                    id="edit-endTime"
+                    type="datetime-local"
+                    value={new Date(editingTask.endTime).toISOString().slice(0, 16)}
+                    onChange={(e) => onEditingTaskChange('endTime', new Date(e.target.value))}
+                    className="col-span-3"
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-priority" className="text-right">Priority</Label>
-                <Select
-                  value={editingTask.priority.toString()}
-                  onValueChange={(value) => onEditingTaskChange('priority', parseInt(value))}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5].map((p) => (
-                      <SelectItem key={p} value={p.toString()}>
-                        Priority {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={onEditClose}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  Update Task
+                </Button>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-status" className="text-right">Status</Label>
-                <Switch
-                  id="edit-status"
-                  checked={editingTask.status === "Finished"}
-                  onCheckedChange={(checked) => 
-                    onEditingTaskChange('status', checked ? "Finished" : "Pending")
-                  }
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-startTime" className="text-right">Start Time</Label>
-                <Input
-                  id="edit-startTime"
-                  type="datetime-local"
-                  value={new Date(editingTask.startTime).toISOString().slice(0, 16)}
-                  onChange={(e) => onEditingTaskChange('startTime', new Date(e.target.value))}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-endTime" className="text-right">End Time</Label>
-                <Input
-                  id="edit-endTime"
-                  type="datetime-local"
-                  value={new Date(editingTask.endTime).toISOString().slice(0, 16)}
-                  onChange={(e) => onEditingTaskChange('endTime', new Date(e.target.value))}
-                  className="col-span-3"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={onEditClose}>Cancel</Button>
-              <Button onClick={onEditSubmit}>Update Task</Button>
-            </div>
+            </form>
           </DialogContent>
         </Dialog>
       )}

@@ -8,13 +8,16 @@ export interface User {
 }
 
 export interface Task {
-  id: string;
+  id: string;      // For frontend use
+  _id: string;     // From MongoDB
   title: string;
   priority: 1 | 2 | 3 | 4 | 5;
   status: 'pending' | 'finished';
   startTime: string;
   endTime: string;
   userId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateTaskInput {
@@ -30,6 +33,7 @@ export interface UpdateTaskInput {
   status?: 'pending' | 'finished';
   startTime?: Date;
   endTime?: Date;
+  userId?: string;
 }
 
 export interface TasksResponse {
@@ -38,30 +42,34 @@ export interface TasksResponse {
 }
 
 export interface TaskStats {
-  totalTasks: number;
-  completedTasks: number;
-  pendingTasks: number;
-  averageTime: number;
-  pendingSummary: {
+  overview: {
+    totalTasks: number;
+    completedTasks: number;
     pendingTasks: number;
-    timeLapsed: number;
-    timeToFinish: number;
+    completedPercentage: number;
+    pendingPercentage: number;
+    averageTime: number;
   };
-  tasksByPriority: Array<{
-    priority: number;
-    pendingTasks: number;
-    timeElapsed: number;
-    timeToFinish: number;
-  }>;
+  timeMetrics: {
+    averageCompletionTime: number;
+    totalTimeElapsed: number;
+    totalTimeToFinish: number;
+    pendingTasksByPriority: Array<{
+      priority: number;
+      count: number;
+      timeElapsed: number;
+      estimatedTimeLeft: number;
+    }>;
+  };
 }
 
 // API instance
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true // Important for cookies
+  withCredentials: true
 });
 
 // Add request interceptor for debugging
@@ -103,17 +111,36 @@ api.interceptors.response.use(
 export const auth = {
   login: async (email: string, password: string): Promise<{ token: string; user: User }> => {
     try {
+      console.log('Login attempt:', { email, url: `${api.defaults.baseURL}/auth/login` });
       const response = await api.post('/auth/login', { email, password });
+      
+      // Store token in cookie
+      if (response.data.token) {
+        Cookies.set('token', response.data.token, { expires: 30 });
+      }
+      
       return response.data;
     } catch (error) {
-      console.error('API Login Error:', error);
+      if (error instanceof AxiosError) {
+        console.error('Login failed:', error.response?.data || error.message);
+      }
       throw error;
     }
   },
 
   signup: async (email: string, password: string) => {
     try {
-      const response = await api.post('/auth/signup', { email, password });
+      const response = await api.post('/auth/signup', { 
+        email, 
+        password,
+        confirmPassword: password 
+      });
+      
+      // Store token in cookie
+      if (response.data.token) {
+        Cookies.set('token', response.data.token, { expires: 30 });
+      }
+      
       return response.data;
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
@@ -139,34 +166,37 @@ export const tasks = {
   },
 
   create: async (task: CreateTaskInput) => {
-    const response = await api.post<Task>('/tasks', task);
-    return response.data;
+    try {
+      console.log('Creating task:', task);
+      const response = await api.post<Task>('/tasks', {
+        ...task,
+        startTime: new Date(task.startTime).toISOString(),
+        endTime: new Date(task.endTime).toISOString()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Create task error:', error);
+      throw error;
+    }
   },
 
-  update: async (id: string, task: UpdateTaskInput) => {
+  update: async (taskId: string, task: UpdateTaskInput) => {
     try {
-      console.log('Updating task:', { id, task });
-      
-      const payload = {
-        ...task,
+      // Use _id for MongoDB
+      const response = await api.patch<Task>(`/tasks/${taskId}`, {
+        title: task.title,
+        priority: task.priority,
+        status: task.status?.toLowerCase(),
         startTime: task.startTime?.toISOString(),
         endTime: task.endTime?.toISOString()
-      };
-      
-      console.log('API payload:', payload);
-      
-      const response = await api.patch<Task>(`/tasks/${id}`, payload);
-      
-      console.log('Update response:', response.data);
-      
+      });
       return response.data;
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof AxiosError) {
-        console.error('API Update Error:', {
-          error,
-          id,
-          task,
-          response: error.response?.data
+        console.error('API update error:', {
+          message: error.message,
+          data: error.response?.data,
+          status: error.response?.status
         });
       }
       throw error;
@@ -174,7 +204,12 @@ export const tasks = {
   },
 
   delete: async (id: string) => {
-    await api.delete(`/tasks/${id}`);
+    try {
+      await api.delete(`/tasks/${id}`);
+    } catch (error) {
+      console.error('Delete task error:', error);
+      throw error;
+    }
   },
 
   getStats: async () => {

@@ -18,7 +18,7 @@ export default function TaskList({
   onSelectAll,
   onEdit
 }: TaskListProps) {
-  const allSelected = tasks.length > 0 && tasks.every(task => selectedTasks.includes(task.id))
+  const allSelected = tasks.length > 0 && tasks.every(task => selectedTasks.includes(task._id))
 
   return (
     <div className="rounded-md border bg-white overflow-x-auto">
@@ -42,34 +42,35 @@ export default function TaskList({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tasks.map((task) => (
-            <TableRow key={`task-${task.id}`}>
-              <TableCell>
-                <Checkbox
-                  checked={selectedTasks.includes(task.id)}
-                  onCheckedChange={() => onTaskSelect(task.id)}
-                  aria-label={`Select task ${task.title}`}
-                />
-              </TableCell>
-              <TableCell>{task.title}</TableCell>
-              <TableCell>{task.priority}</TableCell>
-              <TableCell>{task.status}</TableCell>
-              <TableCell>{new Date(task.startTime).toLocaleString()}</TableCell>
-              <TableCell>{new Date(task.endTime).toLocaleString()}</TableCell>
-              <TableCell>
-                {Math.round((new Date(task.endTime).getTime() - new Date(task.startTime).getTime()) / (1000 * 60 * 60))}
-              </TableCell>
-              <TableCell>
-                <TaskActions task={task} onEdit={onEdit} />
-              </TableCell>
-            </TableRow>
-          ))}
-          {tasks.length === 0 && (
+          {tasks.length === 0 ? (
             <TableRow>
               <TableCell colSpan={8} className="text-center py-4">
                 No tasks found
               </TableCell>
             </TableRow>
+          ) : (
+            tasks.map((task, index) => (
+              <TableRow key={task._id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedTasks.includes(task._id)}
+                    onCheckedChange={(checked) => onTaskSelect(task._id)}
+                    aria-label={`Select task ${task.title}`}
+                  />
+                </TableCell>
+                <TableCell>{task.title}</TableCell>
+                <TableCell>{task.priority}</TableCell>
+                <TableCell>{task.status}</TableCell>
+                <TableCell>{new Date(task.startTime).toLocaleString()}</TableCell>
+                <TableCell>{new Date(task.endTime).toLocaleString()}</TableCell>
+                <TableCell>
+                  {Math.round((new Date(task.endTime).getTime() - new Date(task.startTime).getTime()) / (1000 * 60 * 60))}
+                </TableCell>
+                <TableCell>
+                  <TaskActions task={task} onEdit={onEdit} />
+                </TableCell>
+              </TableRow>
+            ))
           )}
         </TableBody>
       </Table>

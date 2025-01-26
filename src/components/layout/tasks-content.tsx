@@ -15,6 +15,8 @@ import { tasks } from "@/lib/api"
 import type { Task, CreateTaskInput } from "@/lib/api"
 import { dummyData } from "@/data/dummy"
 import { usePolling } from "@/hooks/use-polling"
+import React from "react"
+import { AxiosError } from "axios"
 
 export default function TaskContent() {
   const [currentPage, setCurrentPage] = useState(1)
@@ -52,120 +54,135 @@ export default function TaskContent() {
 
   const handleAddTask = async () => {
     try {
-      const result = await tasks.create(newTask)
-    toast({
-      title: "Success",
-      description: "Task added successfully",
-    })
-      refetch()
-      setIsAddDialogOpen(false)
+      await tasks.create(newTask);
+      toast({
+        title: "Success",
+        description: "Task added successfully",
+      });
+      setIsAddDialogOpen(false);
+      refetch(); // Refresh the task list
     } catch (error) {
-      console.error('Failed to add task:', error)
+      console.error('Failed to add task:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to add task"
-      })
+        description: error instanceof Error ? error.message : "Failed to add task"
+      });
     }
-  }
+  };
+
+  const handleEditClick = (task: Task) => {
+    console.log('Setting editing task:', { id: task._id, task });
+    setEditingTask({
+      ...task,
+      id: task._id // Use MongoDB's _id
+    });
+    setIsEditDialogOpen(true);
+  };
 
   const handleEditTask = async () => {
-    if (!editingTask) return
-    try {
-      console.log('Starting task update:', editingTask);
+    if (!editingTask?.id) {
+      console.error('Invalid task ID:', editingTask);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Invalid task ID"
+      });
+      return;
+    }
 
-      const updatePayload = {
+    try {
+      console.log('Updating task:', { id: editingTask.id, editingTask });
+      
+      await tasks.update(editingTask.id, {
         title: editingTask.title,
         priority: editingTask.priority,
         status: editingTask.status,
         startTime: new Date(editingTask.startTime),
         endTime: new Date(editingTask.endTime)
+      });
+
+      toast({ title: "Success", description: "Task updated successfully" });
+      setIsEditDialogOpen(false);
+      setEditingTask(null);
+      await refetch();
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        console.error('Update failed:', error.response?.data);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.response?.data?.message || "Failed to update task"
+        });
       }
-
-      console.log('Update payload:', updatePayload);
-
-      const updatedTask = await tasks.update(editingTask.id, updatePayload)
-      console.log('Task updated successfully:', updatedTask);
-      
-      toast({
-        title: "Success",
-        description: "Task updated successfully",
-      })
-      refetch()
-      setIsEditDialogOpen(false)
-      setEditingTask(null)
-    } catch (error: any) {
-      console.error('Failed to update task:', {
-        error,
-        response: error.response?.data,
-        status: error.response?.status,
-        task: editingTask,
-        stack: error.stack
-      })
-      
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.response?.data?.message || error.message || "Failed to update task"
-      })
     }
-  }
+  };
 
   const handleDeleteSelected = async () => {
     try {
-      await Promise.all(selectedTasks.map(id => tasks.delete(id)))
-    toast({
-      title: "Success",
-      description: `${selectedTasks.length} task(s) deleted successfully`,
-    })
-      setSelectedTasks([])
-      refetch()
-    } catch (error) {
-      console.error('Failed to delete tasks:', error)
+      console.log('Deleting tasks:', selectedTasks);
+      await Promise.all(selectedTasks.map(id => tasks.delete(id)));
+      
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete tasks"
-      })
+        title: "Success",
+        description: `${selectedTasks.length} task(s) deleted successfully`,
+      });
+      setSelectedTasks([]);
+      await refetch();
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        console.error('Delete failed:', error.response?.data);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.response?.data?.message || "Failed to delete tasks"
+        });
+      }
     }
-  }
+  };
 
   const toggleTaskSelection = (taskId: string) => {
-    setSelectedTasks((prev) => 
+    setSelectedTasks(prev => 
       prev.includes(taskId) 
-        ? prev.filter((id) => id !== taskId) 
+        ? prev.filter(id => id !== taskId)
         : [...prev, taskId]
-    )
-  }
+    );
+  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const pageTaskIds = taskData?.tasks.map(task => task.id) || []
-      setSelectedTasks(pageTaskIds)
+      const currentPageTaskIds = paginatedTasks.map(task => task.id);
+      setSelectedTasks(currentPageTaskIds);
     } else {
-      setSelectedTasks([])
+      setSelectedTasks([]);
     }
-  }
+  };
 
-  const filteredAndSortedTasks = taskData?.tasks
-    .filter((task) => !filterPriority || task.priority === Number(filterPriority))
-    .filter((task) => !filterStatus || task.status === filterStatus)
-    .filter((task) => !selectedTasks.includes(task.id))
-    .sort((a, b) => {
-      const [field, order] = sortBy.split(":")
-      if (field === 'startTime' || field === 'endTime') {
-        const aDate = new Date(a[field]).getTime()
-        const bDate = new Date(b[field]).getTime()
-        return order === "asc" ? aDate - bDate : bDate - aDate
-      }
-      return 0
-    }) || []
+  const filteredAndSortedTasks = React.useMemo(() => {
+    if (!taskData?.tasks) return [];
+    
+    return taskData.tasks
+      .filter((task) => !filterPriority || task.priority === Number(filterPriority))
+      .filter((task) => !filterStatus || task.status === filterStatus)
+      .sort((a, b) => {
+        const [field, order] = sortBy.split(":")
+        if (field === 'startTime' || field === 'endTime') {
+          const aDate = new Date(a[field]).getTime()
+          const bDate = new Date(b[field]).getTime()
+          return order === "asc" ? aDate - bDate : bDate - aDate
+        }
+        return 0
+      });
+  }, [taskData?.tasks, filterPriority, filterStatus, sortBy]);
+
+  const paginatedTasks = React.useMemo(() => {
+    return filteredAndSortedTasks.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [filteredAndSortedTasks, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredAndSortedTasks.length / itemsPerPage)
-  const paginatedTasks = filteredAndSortedTasks.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
 
   return (
     <div className="space-y-4">
@@ -212,10 +229,7 @@ export default function TaskContent() {
         selectedTasks={selectedTasks}
         onTaskSelect={toggleTaskSelection}
         onSelectAll={handleSelectAll}
-        onEdit={(task) => {
-          setEditingTask(task)
-          setIsEditDialogOpen(true)
-        }}
+        onEdit={handleEditClick}
       />
 
       {/* Pagination */}
@@ -235,15 +249,17 @@ export default function TaskContent() {
         newTask={newTask}
         onAddClose={() => setIsAddDialogOpen(false)}
         onEditClose={() => {
-          setIsEditDialogOpen(false)
-          setEditingTask(null)
+          setIsEditDialogOpen(false);
+          setEditingTask(null);
         }}
         onAddSubmit={handleAddTask}
         onEditSubmit={handleEditTask}
         onNewTaskChange={(field, value) => setNewTask({ ...newTask, [field]: value })}
-        onEditingTaskChange={(field, value) => 
-          setEditingTask(editingTask ? { ...editingTask, [field]: value } : null)
-        }
+        onEditingTaskChange={(field, value) => {
+          if (editingTask) {
+            setEditingTask({ ...editingTask, [field]: value });
+          }
+        }}
       />
     </div>
   )

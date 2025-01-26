@@ -3,27 +3,92 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { tasks } from "@/lib/api"
-import { dummyData } from "@/data/dummy"
 import { Progress } from "@/components/ui/progress"
 import { usePolling } from "@/hooks/use-polling"
+import { Skeleton } from "@/components/ui/skeleton"
 
-const PRIORITY_LEVELS = [5, 4, 3, 2, 1]
 
 export default function DashboardContent() {
-  const { data: stats, loading, error } = usePolling(
+  const { data: stats, isLoading } = usePolling(
     () => tasks.getStats(),
-    {
-      interval: 60000, // 1 minute
-      fallbackData: dummyData.stats
+    { 
+      interval: 60000,
+      enabled: true
     }
   )
 
-  if (loading) return <div>Loading...</div>
-  if (error || !stats) return <div>Error loading dashboard</div>
+  console.log('Dashboard loading state:', { isLoading, stats })
 
-  // For percentages
-  const completedPercentage = Math.round((stats.completedTasks / stats.totalTasks) * 100)
-  const pendingPercentage = Math.round((stats.pendingTasks / stats.totalTasks) * 100)
+  if (isLoading || !stats) {
+    return (
+      <div className="space-y-4">
+        {/* Stats Cards Skeleton */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-[120px]" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-[80px]" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Summary Card Skeleton */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-[200px]" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i}>
+                  <Skeleton className="h-4 w-[100px] mb-2" />
+                  <Skeleton className="h-8 w-[80px]" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Priority Table Skeleton */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-[180px]" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex justify-between">
+                  <Skeleton className="h-4 w-[60px]" />
+                  <Skeleton className="h-4 w-[60px]" />
+                  <Skeleton className="h-4 w-[80px]" />
+                  <Skeleton className="h-4 w-[80px]" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const { overview, timeMetrics } = stats
+
+  // Calculate percentages safely
+  const totalTasks = overview.totalTasks || 0;
+  const completedPercentage = totalTasks ? Math.round((overview.completedTasks / totalTasks) * 100) : 0;
+  const pendingPercentage = totalTasks ? Math.round((overview.pendingTasks / totalTasks) * 100) : 0;
+
+  // Destructure with defaults
+  const { 
+    pendingSummary = { timeLapsed: 0, timeToFinish: 0, pendingTasks: 0 },
+    tasksByPriority = []
+  } = stats;
+
+  const PRIORITY_LEVELS = [5, 4, 3, 2, 1];
 
   return (
     <div className="space-y-4">
@@ -33,7 +98,7 @@ export default function DashboardContent() {
             <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTasks}</div>
+            <div className="text-2xl font-bold">{overview.totalTasks}</div>
           </CardContent>
         </Card>
         <Card>
@@ -42,7 +107,7 @@ export default function DashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline justify-between">
-              <div className="text-2xl font-bold">{stats.completedTasks}</div>
+              <div className="text-2xl font-bold">{overview.completedTasks}</div>
               <div className="text-sm text-muted-foreground">
                 {completedPercentage}%
               </div>
@@ -60,7 +125,7 @@ export default function DashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline justify-between">
-              <div className="text-2xl font-bold">{stats.pendingTasks}</div>
+              <div className="text-2xl font-bold">{overview.pendingTasks}</div>
               <div className="text-sm text-muted-foreground">
                 {pendingPercentage}%
               </div>
@@ -77,7 +142,9 @@ export default function DashboardContent() {
             <CardTitle className="text-sm font-medium">Avg. Time per Task</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.averageTime} hrs</div>
+            <div className="text-2xl font-bold">
+              {timeMetrics.averageCompletionTime.toFixed(1)} hrs
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -90,19 +157,15 @@ export default function DashboardContent() {
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <p className="text-sm font-medium">Pending Tasks</p>
-              <p className="text-2xl font-bold">{stats.pendingTasks}</p>
+              <p className="text-2xl font-bold">{overview.pendingTasks || 0}</p>
             </div>
             <div>
               <p className="text-sm font-medium">Total Time Elapsed</p>
-              <p className="text-2xl font-bold">
-                {stats.pendingSummary.timeLapsed} hrs
-              </p>
+              <p className="text-2xl font-bold">{timeMetrics.totalTimeElapsed} hrs</p>
             </div>
             <div>
               <p className="text-sm font-medium">Total Time to Finish</p>
-              <p className="text-2xl font-bold">
-                {stats.pendingSummary.timeToFinish} hrs
-              </p>
+              <p className="text-2xl font-bold">{timeMetrics.totalTimeToFinish} hrs</p>
             </div>
           </div>
         </CardContent>
@@ -116,26 +179,31 @@ export default function DashboardContent() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Task Priority</TableHead>
-                <TableHead>Pending Tasks</TableHead>
-                <TableHead>Time Elapsed (hrs)</TableHead>
-                <TableHead>Time to Finish (hrs)</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Count</TableHead>
+                <TableHead>Time Elapsed</TableHead>
+                <TableHead>Time Left</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {PRIORITY_LEVELS.map((priority) => {
-                const pendingData = stats.tasksByPriority.find(
-                  r => r.priority === priority
-                ) || { pendingTasks: 0, timeElapsed: 0, timeToFinish: 0, priority: 0 }
+                const priorityData = timeMetrics.pendingTasksByPriority.find(
+                  item => item.priority === priority
+                ) || {
+                  priority,
+                  count: 0,
+                  timeElapsed: 0,
+                  estimatedTimeLeft: 0
+                };
 
                 return (
                   <TableRow key={priority}>
                     <TableCell>{priority}</TableCell>
-                    <TableCell>{pendingData.pendingTasks}</TableCell>
-                    <TableCell>{pendingData.timeElapsed}</TableCell>
-                    <TableCell>{pendingData.timeToFinish}</TableCell>
+                    <TableCell>{priorityData.count}</TableCell>
+                    <TableCell>{priorityData.timeElapsed}</TableCell>
+                    <TableCell>{priorityData.estimatedTimeLeft}</TableCell>
                   </TableRow>
-                )
+                );
               })}
             </TableBody>
           </Table>
