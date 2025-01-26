@@ -198,29 +198,30 @@ export default function TaskContent() {
   return (
     <div className="space-y-4">
       {/* Controls Section */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
         {/* Left Controls */}
-        <div className="space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button>
-                <Plus className="h-4 w-4 lg:hidden" />
-                <span className="hidden lg:inline">Add Task</span>
+                <Plus className="h-4 w-4 mr-2" />
+                <span>Add Task</span>
               </Button>
             </DialogTrigger>
           </Dialog>
+          
           <Button 
             variant="destructive" 
             onClick={handleDeleteSelected} 
             disabled={selectedTasks.length === 0}
           >
-            <Trash2 className="h-4 w-4 lg:hidden" />
-            <span className="hidden lg:inline">Delete Selected</span>
+            <Trash2 className="h-4 w-4 mr-2" />
+            <span>Delete Selected</span>
           </Button>
         </div>
         
-        {/* Filters */}
-        <div className="flex gap-2 pb-2 sm:pb-0">
+        {/* Filters - Right side on medium+ screens */}
+        <div className="w-full sm:w-auto">
           <TaskFilters
             sortBy={sortBy}
             filterPriority={filterPriority}

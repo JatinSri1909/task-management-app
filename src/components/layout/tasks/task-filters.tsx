@@ -32,63 +32,67 @@ export default function TaskFilters({
   onClearStatus
 }: TaskFiltersProps) {
   return (
-    <>
-      <Select value={sortBy} onValueChange={onSortChange}>
-        <SelectTrigger className="min-w-[140px] sm:w-[180px]">
-          <SelectValue placeholder="Sort" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="startTime:asc">Start Time: Asc</SelectItem>
-          <SelectItem value="startTime:desc">Start Time: Desc</SelectItem>
-          <SelectItem value="endTime:asc">End Time: Asc</SelectItem>
-          <SelectItem value="endTime:desc">End Time: Desc</SelectItem>
-        </SelectContent>
-      </Select>
+    <div className="flex flex-wrap gap-2 sm:justify-end">
+      <div className="flex items-center gap-2">
+        <Select value={sortBy} onValueChange={onSortChange}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Sort" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="startTime:asc">Start Time: Asc</SelectItem>
+            <SelectItem value="startTime:desc">Start Time: Desc</SelectItem>
+            <SelectItem value="endTime:asc">End Time: Asc</SelectItem>
+            <SelectItem value="endTime:desc">End Time: Desc</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      <Select value={filterPriority} onValueChange={onPriorityChange}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Filter by priority" />
-        </SelectTrigger>
-        <SelectContent>
-          {PRIORITY_OPTIONS.map(option => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex items-center gap-2">
+        <Select value={filterPriority} onValueChange={onPriorityChange}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Priority" />
+          </SelectTrigger>
+          <SelectContent>
+            {PRIORITY_OPTIONS.map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      {filterPriority && (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="shrink-0"
-          onClick={onClearPriority}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      )}
+        {filterPriority && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClearPriority}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
 
-      <Select value={filterStatus} onValueChange={onStatusChange}>
-        <SelectTrigger className="min-w-[140px] sm:w-[180px]">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="pending">Pending</SelectItem>
-          <SelectItem value="finished">Finished</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="flex items-center gap-2">
+        <Select value={filterStatus} onValueChange={onStatusChange}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="finished">Finished</SelectItem>
+          </SelectContent>
+        </Select>
 
-      {filterStatus && (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="shrink-0"
-          onClick={onClearStatus}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      )}
-    </>
+        {filterStatus && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClearStatus}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    </div>
   )
 } 
