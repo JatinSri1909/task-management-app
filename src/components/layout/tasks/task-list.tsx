@@ -18,7 +18,13 @@ export default function TaskList({
   onSelectAll,
   onEdit
 }: TaskListProps) {
-  const allSelected = tasks.length > 0 && tasks.every(task => selectedTasks.includes(task._id))
+  // Check if all visible tasks are selected
+  const allSelected = tasks.length > 0 && tasks.every(task => selectedTasks.includes(task._id));
+
+  // Handle select all checkbox
+  const handleSelectAll = (checked: boolean) => {
+    onSelectAll(checked);
+  };
 
   return (
     <div className="rounded-md border bg-white overflow-x-auto">
@@ -28,7 +34,7 @@ export default function TaskList({
             <TableHead className="w-[50px]">
               <Checkbox
                 checked={allSelected}
-                onCheckedChange={onSelectAll}
+                onCheckedChange={handleSelectAll}
                 aria-label="Select all"
               />
             </TableHead>

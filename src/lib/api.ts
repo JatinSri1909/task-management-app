@@ -182,7 +182,6 @@ export const tasks = {
 
   update: async (taskId: string, task: UpdateTaskInput) => {
     try {
-      // Use _id for MongoDB
       const response = await api.patch<Task>(`/tasks/${taskId}`, {
         title: task.title,
         priority: task.priority,

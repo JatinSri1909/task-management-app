@@ -151,9 +151,11 @@ export default function TaskContent() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const currentPageTaskIds = paginatedTasks.map(task => task.id);
-      setSelectedTasks(currentPageTaskIds);
+      // Select all visible tasks
+      const visibleTaskIds = paginatedTasks.map(task => task._id);
+      setSelectedTasks(visibleTaskIds);
     } else {
+      // Deselect all
       setSelectedTasks([]);
     }
   };
