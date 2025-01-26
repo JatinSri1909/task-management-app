@@ -1,5 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Skeleton } from "@/components/ui/skeleton"
 import TaskActions from "./task-actions"
 import type { Task } from "@/lib/api"
 
@@ -9,6 +10,7 @@ interface TaskListProps {
   onTaskSelect: (taskId: string) => void
   onSelectAll: (checked: boolean) => void
   onEdit: (task: Task) => void
+  isLoading?: boolean
 }
 
 export default function TaskList({
@@ -16,7 +18,8 @@ export default function TaskList({
   selectedTasks,
   onTaskSelect,
   onSelectAll,
-  onEdit
+  onEdit,
+  isLoading
 }: TaskListProps) {
   // Check if all visible tasks are selected
   const allSelected = tasks.length > 0 && tasks.every(task => selectedTasks.includes(task._id));
@@ -25,6 +28,41 @@ export default function TaskList({
   const handleSelectAll = (checked: boolean) => {
     onSelectAll(checked);
   };
+
+  if (isLoading) {
+    return (
+      <div className="rounded-md border bg-white overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50px]"><Skeleton className="h-4 w-4" /></TableHead>
+              <TableHead className="min-w-[200px]"><Skeleton className="h-4 w-20" /></TableHead>
+              <TableHead className="min-w-[100px]"><Skeleton className="h-4 w-16" /></TableHead>
+              <TableHead className="min-w-[100px]"><Skeleton className="h-4 w-16" /></TableHead>
+              <TableHead className="min-w-[180px]"><Skeleton className="h-4 w-24" /></TableHead>
+              <TableHead className="min-w-[180px]"><Skeleton className="h-4 w-24" /></TableHead>
+              <TableHead className="min-w-[140px]"><Skeleton className="h-4 w-20" /></TableHead>
+              <TableHead className="min-w-[80px]"><Skeleton className="h-4 w-16" /></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[...Array(5)].map((_, i) => (
+              <TableRow key={i}>
+                <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    )
+  }
 
   return (
     <div className="rounded-md border bg-white overflow-x-auto">

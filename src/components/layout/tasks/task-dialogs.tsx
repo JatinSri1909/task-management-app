@@ -19,6 +19,14 @@ interface TaskDialogsProps {
   onEditingTaskChange: (field: keyof Task, value: string | number | Date) => void
 }
 
+function formatDateForInput(date: Date | string): string {
+  const d = new Date(date)
+  // Adjust for local timezone
+  const tzOffset = d.getTimezoneOffset() * 60000 // offset in milliseconds
+  const localDate = new Date(d.getTime() - tzOffset)
+  return localDate.toISOString().slice(0, 16)
+}
+
 export default function TaskDialogs({
   isAddOpen,
   isEditOpen,
@@ -71,8 +79,11 @@ export default function TaskDialogs({
               <Input
                 id="startTime"
                 type="datetime-local"
-                value={new Date(newTask.startTime).toISOString().slice(0, 16)}
-                onChange={(e) => onNewTaskChange('startTime', new Date(e.target.value))}
+                value={formatDateForInput(newTask.startTime)}
+                onChange={(e) => {
+                  const date = new Date(e.target.value)
+                  onNewTaskChange('startTime', date)
+                }}
                 className="col-span-3"
               />
             </div>
@@ -81,8 +92,11 @@ export default function TaskDialogs({
               <Input
                 id="endTime"
                 type="datetime-local"
-                value={new Date(newTask.endTime).toISOString().slice(0, 16)}
-                onChange={(e) => onNewTaskChange('endTime', new Date(e.target.value))}
+                value={formatDateForInput(newTask.endTime)}
+                onChange={(e) => {
+                  const date = new Date(e.target.value)
+                  onNewTaskChange('endTime', date)
+                }}
                 className="col-span-3"
               />
             </div>
@@ -152,8 +166,11 @@ export default function TaskDialogs({
                   <Input
                     id="edit-startTime"
                     type="datetime-local"
-                    value={new Date(editingTask.startTime).toISOString().slice(0, 16)}
-                    onChange={(e) => onEditingTaskChange('startTime', new Date(e.target.value))}
+                    value={formatDateForInput(editingTask.startTime)}
+                    onChange={(e) => {
+                      const date = new Date(e.target.value)
+                      onEditingTaskChange('startTime', date)
+                    }}
                     className="col-span-3"
                   />
                 </div>
@@ -162,8 +179,11 @@ export default function TaskDialogs({
                   <Input
                     id="edit-endTime"
                     type="datetime-local"
-                    value={new Date(editingTask.endTime).toISOString().slice(0, 16)}
-                    onChange={(e) => onEditingTaskChange('endTime', new Date(e.target.value))}
+                    value={formatDateForInput(editingTask.endTime)}
+                    onChange={(e) => {
+                      const date = new Date(e.target.value)
+                      onEditingTaskChange('endTime', date)
+                    }}
                     className="col-span-3"
                   />
                 </div>

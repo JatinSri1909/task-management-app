@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useState } from "react"
@@ -45,14 +43,14 @@ export default function TaskContent() {
 
   const [newTask, setNewTask] = useState<CreateTaskInput>({
       title: "",
-    priority: 3 as 1 | 2 | 3 | 4 | 5,
+      priority: 3,
     startTime: new Date(),
     endTime: new Date(),
-  })
+    })
 
   const handleAddTask = async () => {
     try {
-      const result = await tasks.create(newTask)
+      await tasks.create(newTask)
     toast({
       title: "Success",
       description: "Task added successfully",
@@ -61,10 +59,25 @@ export default function TaskContent() {
       setIsAddDialogOpen(false)
     } catch (error) {
       console.error('Failed to add task:', error)
+      let errorMessage = 'Failed to add task'
+      
+      if (error instanceof Error) {
+        // Handle specific validation errors
+        if (error.message.includes('End time must be after start time')) {
+          errorMessage = 'End time must be after start time'
+        } else if (error.message.includes('Title is required')) {
+          errorMessage = 'Title is required'
+        } else if (error.message.includes('Invalid priority')) {
+          errorMessage = 'Priority must be between 1 and 5'
+        } else {
+          errorMessage = error.message
+        }
+      }
+
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to add task"
+        description: errorMessage
       })
     }
   }
@@ -72,8 +85,6 @@ export default function TaskContent() {
   const handleEditTask = async () => {
     if (!editingTask) return
     try {
-      console.log('Starting task update:', editingTask);
-
       const updatePayload = {
         title: editingTask.title,
         priority: editingTask.priority,
@@ -82,11 +93,7 @@ export default function TaskContent() {
         endTime: new Date(editingTask.endTime)
       }
 
-      console.log('Update payload:', updatePayload);
-
-      const updatedTask = await tasks.update(editingTask.id, updatePayload)
-      console.log('Task updated successfully:', updatedTask);
-      
+      await tasks.update(editingTask._id, updatePayload)
     toast({
       title: "Success",
       description: "Task updated successfully",
@@ -94,26 +101,36 @@ export default function TaskContent() {
       refetch()
       setIsEditDialogOpen(false)
       setEditingTask(null)
-    } catch (error: any) {
-      console.error('Failed to update task:', {
-        error,
-        response: error.response?.data,
-        status: error.response?.status,
-        task: editingTask,
-        stack: error.stack
-      })
+    } catch (error) {
+      console.error('Failed to update task:', error)
+      let errorMessage = 'Failed to update task'
       
+      if (error instanceof Error) {
+        // Handle specific validation errors
+        if (error.message.includes('End time must be after start time')) {
+          errorMessage = 'End time must be after start time'
+        } else if (error.message.includes('Title is required')) {
+          errorMessage = 'Title is required'
+        } else if (error.message.includes('Invalid priority')) {
+          errorMessage = 'Priority must be between 1 and 5'
+        } else if (error.message.includes('Task not found')) {
+          errorMessage = 'Task no longer exists'
+        } else {
+          errorMessage = error.message
+        }
+      }
+
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || error.message || "Failed to update task"
+        description: errorMessage
       })
     }
   }
 
   const handleDeleteSelected = async () => {
     try {
-      await Promise.all(selectedTasks.map(id => tasks.delete(id)))
+      await Promise.all(selectedTasks.map(_id => tasks.delete(_id)))
     toast({
       title: "Success",
       description: `${selectedTasks.length} task(s) deleted successfully`,
@@ -122,10 +139,22 @@ export default function TaskContent() {
       refetch()
     } catch (error) {
       console.error('Failed to delete tasks:', error)
+      let errorMessage = 'Failed to delete tasks'
+
+      if (error instanceof Error) {
+        if (error.message.includes('Task not found')) {
+          errorMessage = 'One or more tasks no longer exist'
+        } else if (error.message.includes('Unauthorized')) {
+          errorMessage = 'You are not authorized to delete these tasks'
+        } else {
+          errorMessage = error.message
+        }
+      }
+
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete tasks"
+        description: errorMessage
       })
     }
   }
@@ -140,7 +169,7 @@ export default function TaskContent() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const pageTaskIds = data?.tasks.map(task => task.id) || []
+      const pageTaskIds = data?.tasks.map(task => task._id) || []
       setSelectedTasks(pageTaskIds)
     } else {
       setSelectedTasks([])
@@ -150,7 +179,6 @@ export default function TaskContent() {
   const filteredAndSortedTasks = data?.tasks
     .filter((task) => !filterPriority || task.priority === Number(filterPriority))
     .filter((task) => !filterStatus || task.status === filterStatus)
-    .filter((task) => !selectedTasks.includes(task.id))
     .sort((a, b) => {
       const [field, order] = sortBy.split(":")
       if (field === 'startTime' || field === 'endTime') {
@@ -216,6 +244,7 @@ export default function TaskContent() {
           setEditingTask(task)
           setIsEditDialogOpen(true)
         }}
+        isLoading={isLoading}
       />
 
       {/* Pagination */}
