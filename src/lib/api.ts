@@ -63,6 +63,13 @@ export interface User {
 const baseURL = `${process.env.NEXT_PUBLIC_API_URL}api`;
 console.log('API Base URL:', baseURL);
 
+// Add environment logging
+console.log('Environment:', {
+  nodeEnv: process.env.NODE_ENV,
+  apiUrl: process.env.NEXT_PUBLIC_API_URL,
+  baseURL
+});
+
 const api = axios.create({
   baseURL,
   headers: {
@@ -126,7 +133,8 @@ export const auth = {
           status: error.response?.status,
           data: error.response?.data,
           url: baseURL + '/auth/login',
-          headers: error.response?.headers
+          headers: error.response?.headers,
+          environment: process.env.NODE_ENV
         });
       }
       throw error;
@@ -135,10 +143,32 @@ export const auth = {
 
   signup: async (email: string, password: string) => {
     try {
-      const response = await api.post('/auth/signup', { email, password });
+      console.log('Signup Request:', {
+        url: baseURL + '/auth/signup',
+        email
+      });
+      
+      const response = await api.post('/auth/signup', { 
+        email, 
+        password,
+        confirmPassword: password
+      });
+      
+      console.log('Signup Success:', response.data);
       return response.data;
     } catch (error: unknown) {
-      console.error('API Signup Error:', error);
+      if (error instanceof AxiosError) {
+        console.error('Signup Failed:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          url: baseURL + '/auth/signup'
+        });
+        
+        throw new Error(
+          error.response?.data?.message || 
+          'Failed to create account'
+        );
+      }
       throw error;
     }
   }
