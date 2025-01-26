@@ -32,7 +32,7 @@ export interface UpdateTaskInput {
   priority?: 1 | 2 | 3 | 4 | 5;
   status?: 'pending' | 'finished';
   startTime?: Date;
-  endTime?: Date;
+  endTime?: Date | string; // Can be either estimated or actual completion time
   userId?: string;
 }
 
@@ -151,6 +151,36 @@ export const auth = {
   }
 };
 
+// Add utility functions for time calculations
+export const calculateTaskTimes = (task: Task) => {
+  const now = new Date();
+  const startTime = new Date(task.startTime);
+  const endTime = new Date(task.endTime);
+  
+  // Calculate total time (actual or estimated)
+  const totalTime = Math.max(0, endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60); // in hours
+
+  if (task.status === 'finished') {
+    return { totalTime, timeElapsed: totalTime, timeLeft: 0 };
+  }
+
+  // For pending tasks
+  // Calculate time elapsed (current - start), 0 if task hasn't started
+  const timeElapsed = Math.max(0, now.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+
+  // Calculate time left (end - current), 0 if past deadline
+  const timeLeft = Math.max(0, endTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+  return { totalTime, timeElapsed, timeLeft };
+};
+
+// Add validation function
+export const validateTaskTimes = (startTime: Date, endTime: Date) => {
+  if (startTime >= endTime) {
+    throw new Error('End time must be after start time');
+  }
+};
+
 // Tasks API
 export const tasks = {
   getAll: async (params: {
@@ -167,38 +197,57 @@ export const tasks = {
 
   create: async (task: CreateTaskInput) => {
     try {
+      validateTaskTimes(task.startTime, task.endTime);
+      
       console.log('Creating task:', task);
       const response = await api.post<Task>('/tasks', {
         ...task,
-        startTime: new Date(task.startTime).toISOString(),
-        endTime: new Date(task.endTime).toISOString()
+        startTime: task.startTime.toISOString(),
+        endTime: task.endTime.toISOString()
       });
       return response.data;
     } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
       console.error('Create task error:', error);
-      throw error;
+      throw new Error('Failed to create task');
     }
   },
 
   update: async (taskId: string, task: UpdateTaskInput) => {
     try {
-      const response = await api.patch<Task>(`/tasks/${taskId}`, {
+      const updateData: UpdateTaskInput = {
         title: task.title,
         priority: task.priority,
-        status: task.status?.toLowerCase(),
-        startTime: task.startTime?.toISOString(),
-        endTime: task.endTime?.toISOString()
-      });
+        status: task.status as 'pending' | 'finished' | undefined,
+        startTime: task.startTime ? new Date(task.startTime) : undefined,
+      };
+
+      // Validate times if both are provided
+      if (task.startTime && task.endTime) {
+        validateTaskTimes(
+          new Date(task.startTime),
+          new Date(task.endTime)
+        );
+      }
+
+      // If task is being marked as finished, set endTime to current time
+      if (task.status === 'finished') {
+        updateData.endTime = new Date();
+      } else if (task.endTime) {
+        updateData.endTime = new Date(task.endTime);
+      }
+
+      console.log('Updating task:', { taskId, updateData });
+      const response = await api.patch<Task>(`/tasks/${taskId}`, updateData);
       return response.data;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        console.error('API update error:', {
-          message: error.message,
-          data: error.response?.data,
-          status: error.response?.status
-        });
+      if (error instanceof Error) {
+        throw error;
       }
-      throw error;
+      console.error('Update task error:', error);
+      throw new Error('Failed to update task');
     }
   },
 

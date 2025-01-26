@@ -11,12 +11,12 @@ export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
 
-  const scrollToSection = (elementId: string) => {
+  {/*const scrollToSection = (elementId: string) => {
     const element = document.getElementById(elementId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  };*/}
 
   const handleLogout = () => {
     logout()
@@ -35,18 +35,18 @@ export default function Header() {
         
         {!user && pathname === '/' && (
           <nav className="hidden md:flex space-x-6">
+            {/*<button 
             <button 
               onClick={() => scrollToSection('features')} 
               className="text-base font-medium hover:text-blue-600 transition-colors"
             >
               Features
             </button>
-            <button 
               onClick={() => scrollToSection('pricing')} 
               className="text-base font-medium hover:text-blue-600 transition-colors"
             >
               Pricing
-            </button>
+            </button> */}
           </nav>
         )}
 
