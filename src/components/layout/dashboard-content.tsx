@@ -3,23 +3,63 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { tasks } from "@/lib/api"
-import { dummyData } from "@/data/dummy"
 import { Progress } from "@/components/ui/progress"
 import { usePolling } from "@/hooks/use-polling"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const PRIORITY_LEVELS = [5, 4, 3, 2, 1]
 
 export default function DashboardContent() {
-  const { data: stats, loading, error } = usePolling(
+  const { data: stats, isLoading } = usePolling(
     () => tasks.getStats(),
     {
       interval: 60000,
-      fallbackData: dummyData.stats
     }
   )
 
-  if (loading) return <div>Loading...</div>
-  if (error || !stats) return <div>Error loading dashboard</div>
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Stats Cards Skeletons */}
+        {[...Array(4)].map((_, i) => (
+          <Card key={i} className="p-6">
+            <Skeleton className="h-8 w-[120px] mb-4" />
+            <Skeleton className="h-10 w-[180px]" />
+          </Card>
+        ))}
+
+        {/* Charts Skeleton */}
+        <Card className="col-span-2">
+          <CardHeader>
+            <Skeleton className="h-8 w-[200px]" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full" />
+          </CardContent>
+        </Card>
+
+        {/* Priority Table Skeleton */}
+        <Card className="col-span-2">
+          <CardHeader>
+            <Skeleton className="h-8 w-[200px]" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex justify-between items-center">
+                  <Skeleton className="h-4 w-[100px]" />
+                  <Skeleton className="h-4 w-[60px]" />
+                  <Skeleton className="h-4 w-[80px]" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!stats) return <div>Error loading dashboard</div>
 
   // For percentages
   const completedPercentage = Math.round((stats.overview.completedTasks / stats.overview.totalTasks) * 100)

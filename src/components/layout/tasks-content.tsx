@@ -13,7 +13,6 @@ import TaskDialogs from "./tasks/task-dialogs"
 import TaskPagination from "./tasks/task-pagination"
 import { tasks } from "@/lib/api"
 import type { Task, CreateTaskInput } from "@/lib/api"
-import { dummyData } from "@/data/dummy"
 import { usePolling } from "@/hooks/use-polling"
 
 export default function TaskContent() {
@@ -28,18 +27,19 @@ export default function TaskContent() {
   const itemsPerPage = 10
   const { toast } = useToast()
 
-  const { data: taskData, loading, error, refetch } = usePolling(
-    () => tasks.getAll({
-      page: currentPage,
-      limit: itemsPerPage,
-      priority: filterPriority ? Number(filterPriority) : undefined,
-      status: filterStatus || undefined,
-      field: sortBy.split(':')[0],
-      order: sortBy.split(':')[1] as 'asc' | 'desc'
-    }),
+  const queryParams = {
+    page: currentPage,
+    limit: itemsPerPage,
+    priority: filterPriority ? Number(filterPriority) : undefined,
+    status: filterStatus || undefined,
+    field: sortBy.split(':')[0],
+    order: sortBy.split(':')[1] as 'asc' | 'desc'
+  }
+
+  const { data, isLoading } = usePolling(
+    () => tasks.getAll(queryParams),
     {
-      interval: 30000, // 30 seconds
-      fallbackData: { tasks: dummyData.tasks, total: dummyData.tasks.length }
+      interval: 30000,
     }
   )
 
@@ -140,14 +140,14 @@ export default function TaskContent() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const pageTaskIds = taskData?.tasks.map(task => task.id) || []
+      const pageTaskIds = data?.tasks.map(task => task.id) || []
       setSelectedTasks(pageTaskIds)
     } else {
       setSelectedTasks([])
     }
   }
 
-  const filteredAndSortedTasks = taskData?.tasks
+  const filteredAndSortedTasks = data?.tasks
     .filter((task) => !filterPriority || task.priority === Number(filterPriority))
     .filter((task) => !filterStatus || task.status === filterStatus)
     .filter((task) => !selectedTasks.includes(task.id))
